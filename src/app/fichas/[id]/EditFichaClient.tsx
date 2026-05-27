@@ -21,7 +21,10 @@ export default function EditFichaClient({ ficha }: { ficha: Ficha }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Error al guardar (HTTP ${res.status})`);
+      }
       alert("Ficha actualizada correctamente");
       router.refresh();
     } catch (e) {

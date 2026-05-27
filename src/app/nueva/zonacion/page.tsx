@@ -18,10 +18,10 @@ export default function NuevaZonacionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, tipo: "zonacion" }),
       });
-      if (!res.ok) throw new Error("Error al guardar");
-      const ficha = await res.json();
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || `Error al guardar (HTTP ${res.status})`);
       alert("Ficha creada correctamente");
-      router.push(`/fichas/${ficha.id}`);
+      router.push(`/fichas/${body.id}`);
     } catch (e) {
       alert(String(e));
     } finally {

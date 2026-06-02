@@ -7,16 +7,11 @@ import { useState, useMemo, useCallback } from "react";
 /* ------------------------------------------------------------------ */
 
 interface ZonacionFormProps {
-  initialData?: Record<string, any>;
-  onSave: (data: {
-    tipo: "zonacion";
-    individuo: string;
-    proyecto: string;
-    registrador: string;
-    fecha_registro: string;
-    data: Record<string, any>;
-  }) => Promise<void>;
+  initialData?: Record<string, any>;   // the saved `data` blob (method-specific keys)
+  registrador?: string;
+  fechaRegistro?: string;
   saving?: boolean;
+  onSave: (payload: { registrador: string; fechaRegistro: string; data: Record<string, any> }) => Promise<void>;
 }
 
 interface FFIRow {
@@ -211,12 +206,12 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full flex items-center justify-between bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition text-left"
+      className="w-full flex items-center justify-between bg-surface-2 text-ink px-4 py-3 rounded-lg hover:bg-line-strong transition text-left"
     >
       <span className="font-semibold text-sm">{label}</span>
       <span className="flex items-center gap-3">
         {badge && (
-          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-accent text-white px-2 py-0.5 rounded-full">
             {badge}
           </span>
         )}
@@ -228,7 +223,7 @@ function SectionHeader({
 
 function CompletionBadge({ present, total }: { present: number; total: number }) {
   return (
-    <div className="text-xs text-gray-500 mt-1">
+    <div className="text-xs text-faint mt-1">
       {present}/{total} zonas ({pct(present, total)}%)
     </div>
   );
@@ -238,7 +233,7 @@ function CompletionBadge({ present, total }: { present: number; total: number })
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
-export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFormProps) {
+export default function ZonacionForm({ initialData, registrador: registradorProp, fechaRegistro: fechaRegistroProp, onSave, saving }: ZonacionFormProps) {
   /* ---------- section toggle state ---------- */
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -251,12 +246,8 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
   }, []);
 
   /* ---------- context fields ---------- */
-  const [individuo, setIndividuo] = useState(initialData?.individuo ?? "");
-  const [proyecto, setProyecto] = useState(initialData?.proyecto ?? "");
-  const [registrador, setRegistrador] = useState(initialData?.registrador ?? "");
-  const [fechaRegistro, setFechaRegistro] = useState(initialData?.fecha_registro ?? "");
-  const [sexoEstimado, setSexoEstimado] = useState(initialData?.sexo_estimado ?? "");
-  const [edadEstimada, setEdadEstimada] = useState(initialData?.edad_estimada ?? "");
+  const [registrador, setRegistrador] = useState(registradorProp ?? "");
+  const [fechaRegistro, setFechaRegistro] = useState(fechaRegistroProp ?? "");
   const [unidadRasgo, setUnidadRasgo] = useState(initialData?.unidad_rasgo ?? "");
   const [nivelCapa, setNivelCapa] = useState(initialData?.nivel_capa ?? "");
 
@@ -502,14 +493,9 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
 
   const handleSubmit = useCallback(async () => {
     await onSave({
-      tipo: "zonacion",
-      individuo,
-      proyecto,
       registrador,
-      fecha_registro: fechaRegistro,
+      fechaRegistro,
       data: {
-        sexo_estimado: sexoEstimado,
-        edad_estimada: edadEstimada,
         unidad_rasgo: unidadRasgo,
         nivel_capa: nivelCapa,
         cranium_zones: craniumZones,
@@ -544,8 +530,8 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
       },
     });
   }, [
-    onSave, individuo, proyecto, registrador, fechaRegistro,
-    sexoEstimado, edadEstimada, unidadRasgo, nivelCapa,
+    onSave, registrador, fechaRegistro,
+    unidadRasgo, nivelCapa,
     craniumZones, craniumObs, mandibleZones, vertebraeZones,
     sacrumZones, sternumZones, clavicleZones, ribZones,
     scapulaZones, humerusZones, humerusFusion, radiusZones,
@@ -573,10 +559,10 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
       <div className="overflow-x-auto">
         <table className="text-xs border-collapse w-full">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-2 py-1 text-left">Zona</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Izq</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Der</th>
+            <tr className="bg-surface-2">
+              <th className="border border-line-strong px-2 py-1 text-left">Zona</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Izq</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Der</th>
             </tr>
           </thead>
           <tbody>
@@ -584,24 +570,24 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
               const kL = `${prefix}_${z}_L`;
               const kR = `${prefix}_${z}_R`;
               return (
-                <tr key={String(z)} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-2 py-1">
+                <tr key={String(z)} className="hover:bg-surface-2">
+                  <td className="border border-line-strong px-2 py-1">
                     {zoneLabels ? `${z} - ${zoneLabels[z]}` : `Z${z}`}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <input
                       type="checkbox"
                       checked={!!state[kL]}
                       onChange={() => toggler(kL)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                   </td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <input
                       type="checkbox"
                       checked={!!state[kR]}
                       onChange={() => toggler(kR)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                   </td>
                 </tr>
@@ -628,12 +614,12 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
       <div className="overflow-x-auto">
         <table className="text-xs border-collapse w-full">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-2 py-1 text-left">Zona</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Izq</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Der</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Fusión Izq</th>
-              <th className="border border-gray-300 px-2 py-1 text-center">Fusión Der</th>
+            <tr className="bg-surface-2">
+              <th className="border border-line-strong px-2 py-1 text-left">Zona</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Izq</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Der</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Fusión Izq</th>
+              <th className="border border-line-strong px-2 py-1 text-center">Fusión Der</th>
             </tr>
           </thead>
           <tbody>
@@ -643,31 +629,31 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
               const fL = `${prefix}_${z}_fusL`;
               const fR = `${prefix}_${z}_fusR`;
               return (
-                <tr key={String(z)} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-2 py-1">Z{z}</td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                <tr key={String(z)} className="hover:bg-surface-2">
+                  <td className="border border-line-strong px-2 py-1">Z{z}</td>
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <input
                       type="checkbox"
                       checked={!!state[kL]}
                       onChange={() => toggler(kL)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                   </td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <input
                       type="checkbox"
                       checked={!!state[kR]}
                       onChange={() => toggler(kR)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                   </td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <select
                       value={fusionState[fL] ?? ""}
                       onChange={(e) =>
                         fusionSetter((p) => ({ ...p, [fL]: e.target.value }))
                       }
-                      className="text-xs border border-gray-300 rounded px-1 py-0.5"
+                      className="text-xs border border-line-strong rounded px-1 py-0.5"
                     >
                       <option value="">--</option>
                       <option value="F">Fusionado</option>
@@ -675,13 +661,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                       <option value="DUF">DUF</option>
                     </select>
                   </td>
-                  <td className="border border-gray-300 px-2 py-1 text-center">
+                  <td className="border border-line-strong px-2 py-1 text-center">
                     <select
                       value={fusionState[fR] ?? ""}
                       onChange={(e) =>
                         fusionSetter((p) => ({ ...p, [fR]: e.target.value }))
                       }
-                      className="text-xs border border-gray-300 rounded px-1 py-0.5"
+                      className="text-xs border border-line-strong rounded px-1 py-0.5"
                     >
                       <option value="">--</option>
                       <option value="F">Fusionado</option>
@@ -704,10 +690,10 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
       <div className="overflow-x-auto">
         <table className="text-xs border-collapse w-full">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-2 py-1 text-left">{prefix}</th>
+            <tr className="bg-surface-2">
+              <th className="border border-line-strong px-2 py-1 text-left">{prefix}</th>
               {Object.entries(VERTEBRA_ZONES).map(([z, lbl]) => (
-                <th key={z} className="border border-gray-300 px-2 py-1 text-center">
+                <th key={z} className="border border-line-strong px-2 py-1 text-center">
                   {z}-{lbl}
                 </th>
               ))}
@@ -715,8 +701,8 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           </thead>
           <tbody>
             {range(1, count).map((i) => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-2 py-1 font-medium">
+              <tr key={i} className="hover:bg-surface-2">
+                <td className="border border-line-strong px-2 py-1 font-medium">
                   {prefix}{i}
                 </td>
                 {range(1, 4).map((z) => {
@@ -724,13 +710,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                   return (
                     <td
                       key={z}
-                      className="border border-gray-300 px-2 py-1 text-center"
+                      className="border border-line-strong px-2 py-1 text-center"
                     >
                       <input
                         type="checkbox"
                         checked={!!vertebraeZones[key]}
                         onChange={() => toggleVertebrae(key)}
-                        className="accent-blue-600"
+                        className="accent-accent"
                       />
                     </td>
                   );
@@ -757,24 +743,20 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("context")}
         />
         {openSections.context && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="border border-line rounded-b-lg p-4 bg-surface grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "Individuo", value: individuo, setter: setIndividuo },
-              { label: "Proyecto", value: proyecto, setter: setProyecto },
               { label: "Registrador", value: registrador, setter: setRegistrador },
               { label: "Fecha de registro", value: fechaRegistro, setter: setFechaRegistro },
-              { label: "Sexo estimado", value: sexoEstimado, setter: setSexoEstimado },
-              { label: "Edad estimada", value: edadEstimada, setter: setEdadEstimada },
               { label: "Unidad/rasgo", value: unidadRasgo, setter: setUnidadRasgo },
               { label: "Nivel/capa", value: nivelCapa, setter: setNivelCapa },
             ].map(({ label, value, setter }) => (
               <label key={label} className="block text-sm">
-                <span className="font-medium text-gray-700">{label}</span>
+                <span className="font-medium text-muted">{label}</span>
                 <input
                   type="text"
                   value={value}
                   onChange={(e) => setter(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-line-strong rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-accent"
                 />
               </label>
             ))}
@@ -791,20 +773,20 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${craniumStats.present}/15 (${craniumStats.pct}%)`}
         />
         {openSections.cranium && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-3">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {Object.entries(CRANIUM_ZONES).map(([z, lbl]) => {
                 const key = `cran_${z}`;
                 return (
                   <label
                     key={z}
-                    className="flex items-center gap-2 text-xs bg-gray-50 rounded px-2 py-1.5 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={!!craniumZones[key]}
                       onChange={() => toggleCranium(key)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                     <span>
                       {z}-{lbl}
@@ -815,12 +797,12 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
             <CompletionBadge present={craniumStats.present} total={15} />
             <label className="block text-sm">
-              <span className="font-medium text-gray-700">Observaciones</span>
+              <span className="font-medium text-muted">Observaciones</span>
               <textarea
                 value={craniumObs}
                 onChange={(e) => setCraniumObs(e.target.value)}
                 rows={2}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-line-strong rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-accent"
               />
             </label>
           </div>
@@ -836,14 +818,14 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${mandibleStats.present}/14 (${mandibleStats.pct}%)`}
         />
         {openSections.mandible && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Zona</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Izq</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Der</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Zona</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Izq</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Der</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -851,24 +833,24 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                     const kL = `mand_${z}_L`;
                     const kR = `mand_${z}_R`;
                     return (
-                      <tr key={z} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-2 py-1">
+                      <tr key={z} className="hover:bg-surface-2">
+                        <td className="border border-line-strong px-2 py-1">
                           {z}-{lbl}
                         </td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
+                        <td className="border border-line-strong px-2 py-1 text-center">
                           <input
                             type="checkbox"
                             checked={!!mandibleZones[kL]}
                             onChange={() => toggleMandible(kL)}
-                            className="accent-blue-600"
+                            className="accent-accent"
                           />
                         </td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
+                        <td className="border border-line-strong px-2 py-1 text-center">
                           <input
                             type="checkbox"
                             checked={!!mandibleZones[kR]}
                             onChange={() => toggleMandible(kR)}
-                            className="accent-blue-600"
+                            className="accent-accent"
                           />
                         </td>
                       </tr>
@@ -891,12 +873,12 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${vertebraeStats.present}/${vertebraeStats.total} (${vertebraeStats.pct}%)`}
         />
         {openSections.vertebrae && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-4">
-            <h4 className="text-sm font-semibold text-gray-700">Cervicales (C1-C7)</h4>
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <h4 className="text-sm font-semibold text-muted">Cervicales (C1-C7)</h4>
             {renderVertebraeBlock("C", 7)}
-            <h4 className="text-sm font-semibold text-gray-700">Torácicas (T1-T12)</h4>
+            <h4 className="text-sm font-semibold text-muted">Torácicas (T1-T12)</h4>
             {renderVertebraeBlock("T", 12)}
-            <h4 className="text-sm font-semibold text-gray-700">Lumbares (L1-L5)</h4>
+            <h4 className="text-sm font-semibold text-muted">Lumbares (L1-L5)</h4>
             {renderVertebraeBlock("L", 5)}
             <CompletionBadge present={vertebraeStats.present} total={vertebraeStats.total} />
           </div>
@@ -912,14 +894,14 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${sacrumStats.present}/20 (${sacrumStats.pct}%)`}
         />
         {openSections.sacrum && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Segmento</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Segmento</th>
                     {Object.entries(VERTEBRA_ZONES).map(([z, lbl]) => (
-                      <th key={z} className="border border-gray-300 px-2 py-1 text-center">
+                      <th key={z} className="border border-line-strong px-2 py-1 text-center">
                         {z}-{lbl}
                       </th>
                     ))}
@@ -927,20 +909,20 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                 </thead>
                 <tbody>
                   {range(1, 5).map((i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">S{i}</td>
+                    <tr key={i} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">S{i}</td>
                       {range(1, 4).map((z) => {
                         const key = `S${i}_z${z}`;
                         return (
                           <td
                             key={z}
-                            className="border border-gray-300 px-2 py-1 text-center"
+                            className="border border-line-strong px-2 py-1 text-center"
                           >
                             <input
                               type="checkbox"
                               checked={!!sacrumZones[key]}
                               onChange={() => toggleSacrum(key)}
-                              className="accent-blue-600"
+                              className="accent-accent"
                             />
                           </td>
                         );
@@ -964,20 +946,20 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${sternumStats.present}/3 (${sternumStats.pct}%)`}
         />
         {openSections.sternum && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             <div className="flex flex-wrap gap-3">
               {Object.entries(STERNUM_ZONES).map(([z, lbl]) => {
                 const key = `stern_${z}`;
                 return (
                   <label
                     key={z}
-                    className="flex items-center gap-2 text-xs bg-gray-50 rounded px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 text-xs bg-surface-2 rounded px-3 py-2 hover:bg-surface-2 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={!!sternumZones[key]}
                       onChange={() => toggleSternum(key)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                     <span>
                       {z}-{lbl}
@@ -1000,7 +982,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${clavicleStats.present}/6 (${clavicleStats.pct}%)`}
         />
         {openSections.clavicle && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralZoneGrid(3, clavicleZones, toggleClavicle, "clav", CLAVICLE_ZONES)}
             <CompletionBadge present={clavicleStats.present} total={6} />
           </div>
@@ -1016,27 +998,27 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${ribStats.present}/72 (${ribStats.pct}%)`}
         />
         {openSections.ribs && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left" rowSpan={2}>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>
                       Costilla
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Izquierda
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Derecha
                     </th>
                   </tr>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-surface-2">
                     {["Cabeza", "Ángulo", "Cuerpo", "Cabeza", "Ángulo", "Cuerpo"].map(
                       (lbl, i) => (
                         <th
                           key={`${lbl}_${i}`}
-                          className="border border-gray-300 px-2 py-1 text-center"
+                          className="border border-line-strong px-2 py-1 text-center"
                         >
                           {lbl}
                         </th>
@@ -1046,8 +1028,8 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                 </thead>
                 <tbody>
                   {range(1, 12).map((rib) => (
-                    <tr key={rib} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">
+                    <tr key={rib} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">
                         {rib}
                       </td>
                       {range(1, 3).map((z) => {
@@ -1055,13 +1037,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                         return (
                           <td
                             key={`L${z}`}
-                            className="border border-gray-300 px-2 py-1 text-center"
+                            className="border border-line-strong px-2 py-1 text-center"
                           >
                             <input
                               type="checkbox"
                               checked={!!ribZones[key]}
                               onChange={() => toggleRib(key)}
-                              className="accent-blue-600"
+                              className="accent-accent"
                             />
                           </td>
                         );
@@ -1071,13 +1053,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                         return (
                           <td
                             key={`R${z}`}
-                            className="border border-gray-300 px-2 py-1 text-center"
+                            className="border border-line-strong px-2 py-1 text-center"
                           >
                             <input
                               type="checkbox"
                               checked={!!ribZones[key]}
                               onChange={() => toggleRib(key)}
-                              className="accent-blue-600"
+                              className="accent-accent"
                             />
                           </td>
                         );
@@ -1101,7 +1083,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${scapulaStats.present}/18 (${scapulaStats.pct}%)`}
         />
         {openSections.scapula && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralZoneGrid(9, scapulaZones, toggleScapula, "scap")}
             <CompletionBadge present={scapulaStats.present} total={18} />
           </div>
@@ -1117,7 +1099,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${humerusStats.present}/22 (${humerusStats.pct}%)`}
         />
         {openSections.humerus && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               11,
               humerusZones,
@@ -1140,7 +1122,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${radiusStats.present}/22 (${radiusStats.pct}%)`}
         />
         {openSections.radius && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               11,
               radiusZones,
@@ -1164,7 +1146,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${ulnaStats.present}/18 (${ulnaStats.pct}%)`}
         />
         {openSections.ulna && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               9,
               ulnaZones,
@@ -1188,7 +1170,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${osCoxaeStats.present}/24 (${osCoxaeStats.pct}%)`}
         />
         {openSections.osCoxae && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralZoneGrid(12, osCoxaeZones, toggleOsCoxae, "cox")}
             <CompletionBadge present={osCoxaeStats.present} total={24} />
           </div>
@@ -1204,7 +1186,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${femurStats.present}/22 (${femurStats.pct}%)`}
         />
         {openSections.femur && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               11,
               femurZones,
@@ -1227,7 +1209,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${tibiaStats.present}/20 (${tibiaStats.pct}%)`}
         />
         {openSections.tibia && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               10,
               tibiaZones,
@@ -1250,7 +1232,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           badge={`${fibulaStats.present}/12 (${fibulaStats.pct}%)`}
         />
         {openSections.fibula && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             {renderBilateralWithFusion(
               6,
               fibulaZones,
@@ -1272,28 +1254,28 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("hand")}
         />
         {openSections.hand && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-4">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
             {/* Metacarpals */}
-            <h4 className="text-sm font-semibold text-gray-700">
+            <h4 className="text-sm font-semibold text-muted">
               Metacarpos (MC1-MC5) - 3 zonas c/u
             </h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left" rowSpan={2}>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>
                       MC
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Izquierda
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Derecha
                     </th>
                   </tr>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-surface-2">
                     {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-gray-300 px-2 py-1 text-center">
+                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">
                         {lbl}
                       </th>
                     ))}
@@ -1301,21 +1283,21 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                 </thead>
                 <tbody>
                   {range(1, 5).map((mc) => (
-                    <tr key={mc} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">MC{mc}</td>
+                    <tr key={mc} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">MC{mc}</td>
                       {range(1, 3).map((z) => {
                         const key = `hMC${mc}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-blue-600" />
+                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
                           </td>
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `hMC${mc}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-blue-600" />
+                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
                           </td>
                         );
                       })}
@@ -1326,26 +1308,26 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
 
             {/* Phalanges */}
-            <h4 className="text-sm font-semibold text-gray-700">
+            <h4 className="text-sm font-semibold text-muted">
               Falanges (prox/med/dist) - 3 zonas c/u
             </h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left" rowSpan={2}>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>
                       Falange
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Izquierda
                     </th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
                       Derecha
                     </th>
                   </tr>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-surface-2">
                     {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-gray-300 px-2 py-1 text-center">
+                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">
                         {lbl}
                       </th>
                     ))}
@@ -1353,21 +1335,21 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                 </thead>
                 <tbody>
                   {(["Prox", "Med", "Dist"] as const).map((ph) => (
-                    <tr key={ph} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">{ph}</td>
+                    <tr key={ph} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">{ph}</td>
                       {range(1, 3).map((z) => {
                         const key = `hPh${ph}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-blue-600" />
+                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
                           </td>
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `hPh${ph}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-blue-600" />
+                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
                           </td>
                         );
                       })}
@@ -1378,14 +1360,14 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
 
             {/* Carpals */}
-            <h4 className="text-sm font-semibold text-gray-700">Carpos - presencia L/R</h4>
+            <h4 className="text-sm font-semibold text-muted">Carpos - presencia L/R</h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Carpo</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Izq</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Der</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Carpo</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Izq</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Der</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1393,13 +1375,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                     const kL = `hCarp_${c}_L`;
                     const kR = `hCarp_${c}_R`;
                     return (
-                      <tr key={c} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-2 py-1 font-medium">{c}</td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!handZones[kL]} onChange={() => toggleHand(kL)} className="accent-blue-600" />
+                      <tr key={c} className="hover:bg-surface-2">
+                        <td className="border border-line-strong px-2 py-1 font-medium">{c}</td>
+                        <td className="border border-line-strong px-2 py-1 text-center">
+                          <input type="checkbox" checked={!!handZones[kL]} onChange={() => toggleHand(kL)} className="accent-accent" />
                         </td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!handZones[kR]} onChange={() => toggleHand(kR)} className="accent-blue-600" />
+                        <td className="border border-line-strong px-2 py-1 text-center">
+                          <input type="checkbox" checked={!!handZones[kR]} onChange={() => toggleHand(kR)} className="accent-accent" />
                         </td>
                       </tr>
                     );
@@ -1419,42 +1401,42 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("foot")}
         />
         {openSections.foot && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-4">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
             {/* Metatarsals */}
-            <h4 className="text-sm font-semibold text-gray-700">
+            <h4 className="text-sm font-semibold text-muted">
               Metatarsos (MT1-MT5) - 3 zonas c/u
             </h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left" rowSpan={2}>MT</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>Izquierda</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>Derecha</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>MT</th>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Izquierda</th>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Derecha</th>
                   </tr>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-surface-2">
                     {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-gray-300 px-2 py-1 text-center">{lbl}</th>
+                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">{lbl}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {range(1, 5).map((mt) => (
-                    <tr key={mt} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">MT{mt}</td>
+                    <tr key={mt} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">MT{mt}</td>
                       {range(1, 3).map((z) => {
                         const key = `fMT${mt}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-blue-600" />
+                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
                           </td>
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `fMT${mt}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-blue-600" />
+                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
                           </td>
                         );
                       })}
@@ -1465,40 +1447,40 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
 
             {/* Phalanges */}
-            <h4 className="text-sm font-semibold text-gray-700">
+            <h4 className="text-sm font-semibold text-muted">
               Falanges (prox/med/dist) - 3 zonas c/u
             </h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left" rowSpan={2}>Falange</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>Izquierda</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center" colSpan={3}>Derecha</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>Falange</th>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Izquierda</th>
+                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Derecha</th>
                   </tr>
-                  <tr className="bg-gray-100">
+                  <tr className="bg-surface-2">
                     {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-gray-300 px-2 py-1 text-center">{lbl}</th>
+                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">{lbl}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {(["Prox", "Med", "Dist"] as const).map((ph) => (
-                    <tr key={ph} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium">{ph}</td>
+                    <tr key={ph} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium">{ph}</td>
                       {range(1, 3).map((z) => {
                         const key = `fPh${ph}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-blue-600" />
+                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
                           </td>
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `fPh${ph}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-gray-300 px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-blue-600" />
+                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
+                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
                           </td>
                         );
                       })}
@@ -1509,22 +1491,22 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
 
             {/* Calcaneus */}
-            <h4 className="text-sm font-semibold text-gray-700">Calcáneo (5 zonas, L/R)</h4>
+            <h4 className="text-sm font-semibold text-muted">Calcáneo (5 zonas, L/R)</h4>
             {renderBilateralZoneGrid(5, footZones, toggleFoot, "fCalc")}
 
             {/* Talus */}
-            <h4 className="text-sm font-semibold text-gray-700">Astrágalo (4 zonas, L/R)</h4>
+            <h4 className="text-sm font-semibold text-muted">Astrágalo (4 zonas, L/R)</h4>
             {renderBilateralZoneGrid(4, footZones, toggleFoot, "fTalus")}
 
             {/* Tarsals */}
-            <h4 className="text-sm font-semibold text-gray-700">Tarsos - presencia L/R</h4>
+            <h4 className="text-sm font-semibold text-muted">Tarsos - presencia L/R</h4>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Tarso</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Izq</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Der</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Tarso</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Izq</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Der</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1532,13 +1514,13 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                     const kL = `fTars_${t}_L`;
                     const kR = `fTars_${t}_R`;
                     return (
-                      <tr key={t} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-2 py-1 font-medium">{t}</td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!footZones[kL]} onChange={() => toggleFoot(kL)} className="accent-blue-600" />
+                      <tr key={t} className="hover:bg-surface-2">
+                        <td className="border border-line-strong px-2 py-1 font-medium">{t}</td>
+                        <td className="border border-line-strong px-2 py-1 text-center">
+                          <input type="checkbox" checked={!!footZones[kL]} onChange={() => toggleFoot(kL)} className="accent-accent" />
                         </td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!footZones[kR]} onChange={() => toggleFoot(kR)} className="accent-blue-600" />
+                        <td className="border border-line-strong px-2 py-1 text-center">
+                          <input type="checkbox" checked={!!footZones[kR]} onChange={() => toggleFoot(kR)} className="accent-accent" />
                         </td>
                       </tr>
                     );
@@ -1548,14 +1530,14 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
             </div>
 
             {/* Patella */}
-            <h4 className="text-sm font-semibold text-gray-700">Rótula - presencia L/R</h4>
+            <h4 className="text-sm font-semibold text-muted">Rótula - presencia L/R</h4>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-xs cursor-pointer">
                 <input
                   type="checkbox"
                   checked={!!footZones["fPatella_L"]}
                   onChange={() => toggleFoot("fPatella_L")}
-                  className="accent-blue-600"
+                  className="accent-accent"
                 />
                 <span>Izquierda</span>
               </label>
@@ -1564,7 +1546,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                   type="checkbox"
                   checked={!!footZones["fPatella_R"]}
                   onChange={() => toggleFoot("fPatella_R")}
-                  className="accent-blue-600"
+                  className="accent-accent"
                 />
                 <span>Derecha</span>
               </label>
@@ -1581,14 +1563,14 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("fragments")}
         />
         {openSections.fragments && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white">
+          <div className="border border-line rounded-b-lg p-4 bg-surface">
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Tipo</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Tipo</th>
                     {FRAGMENT_SIZES.map((s) => (
-                      <th key={s} className="border border-gray-300 px-2 py-1 text-center">
+                      <th key={s} className="border border-line-strong px-2 py-1 text-center">
                         {s}mm
                       </th>
                     ))}
@@ -1596,8 +1578,8 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                 </thead>
                 <tbody>
                   {FRAGMENT_TYPES.map((ft) => (
-                    <tr key={ft} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-2 py-1 font-medium whitespace-nowrap">
+                    <tr key={ft} className="hover:bg-surface-2">
+                      <td className="border border-line-strong px-2 py-1 font-medium whitespace-nowrap">
                         {ft}
                       </td>
                       {FRAGMENT_SIZES.map((s) => {
@@ -1605,7 +1587,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                         return (
                           <td
                             key={s}
-                            className="border border-gray-300 px-1 py-1 text-center"
+                            className="border border-line-strong px-1 py-1 text-center"
                           >
                             <input
                               type="number"
@@ -1617,7 +1599,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                                   [key]: e.target.value === "" ? 0 : parseInt(e.target.value, 10),
                                 }))
                               }
-                              className="w-12 border border-gray-300 rounded px-1 py-0.5 text-center text-xs"
+                              className="w-12 border border-line-strong rounded px-1 py-0.5 text-center text-xs"
                             />
                           </td>
                         );
@@ -1639,19 +1621,19 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("ffi")}
         />
         {openSections.ffi && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-3">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-2 py-1 text-left">Elemento</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Lateralidad</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Contorno (0-2)</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Ángulo (0-2)</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Textura (0-2)</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">FFI Total</th>
-                    <th className="border border-gray-300 px-2 py-1 text-left">Observación</th>
-                    <th className="border border-gray-300 px-2 py-1 text-center">Acción</th>
+                  <tr className="bg-surface-2">
+                    <th className="border border-line-strong px-2 py-1 text-left">Elemento</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Lateralidad</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Contorno (0-2)</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Ángulo (0-2)</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Textura (0-2)</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">FFI Total</th>
+                    <th className="border border-line-strong px-2 py-1 text-left">Observación</th>
+                    <th className="border border-line-strong px-2 py-1 text-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1673,20 +1655,20 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                     };
 
                     return (
-                      <tr key={row.id} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-1 py-1">
+                      <tr key={row.id} className="hover:bg-surface-2">
+                        <td className="border border-line-strong px-1 py-1">
                           <input
                             type="text"
                             value={row.element}
                             onChange={(e) => updateRow("element", e.target.value)}
-                            className="w-full border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="w-full border border-line-strong rounded px-1 py-0.5 text-xs"
                           />
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-line-strong px-1 py-1 text-center">
                           <select
                             value={row.laterality}
                             onChange={(e) => updateRow("laterality", e.target.value)}
-                            className="border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
                           >
                             <option value="">--</option>
                             <option value="L">Izq</option>
@@ -1695,11 +1677,11 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                             <option value="NA">N/A</option>
                           </select>
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-line-strong px-1 py-1 text-center">
                           <select
                             value={row.outline}
                             onChange={(e) => updateRow("outline", e.target.value)}
-                            className="border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
                           >
                             <option value="">--</option>
                             <option value="0">0</option>
@@ -1707,11 +1689,11 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                             <option value="2">2</option>
                           </select>
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-line-strong px-1 py-1 text-center">
                           <select
                             value={row.angle}
                             onChange={(e) => updateRow("angle", e.target.value)}
-                            className="border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
                           >
                             <option value="">--</option>
                             <option value="0">0</option>
@@ -1719,11 +1701,11 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                             <option value="2">2</option>
                           </select>
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-line-strong px-1 py-1 text-center">
                           <select
                             value={row.texture}
                             onChange={(e) => updateRow("texture", e.target.value)}
-                            className="border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
                           >
                             <option value="">--</option>
                             <option value="0">0</option>
@@ -1731,24 +1713,24 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                             <option value="2">2</option>
                           </select>
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center font-semibold">
+                        <td className="border border-line-strong px-1 py-1 text-center font-semibold">
                           {total}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1">
+                        <td className="border border-line-strong px-1 py-1">
                           <input
                             type="text"
                             value={row.observation}
                             onChange={(e) => updateRow("observation", e.target.value)}
-                            className="w-full border border-gray-300 rounded px-1 py-0.5 text-xs"
+                            className="w-full border border-line-strong rounded px-1 py-0.5 text-xs"
                           />
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-line-strong px-1 py-1 text-center">
                           <button
                             type="button"
                             onClick={() =>
                               setFFIRows((prev) => prev.filter((_, i) => i !== idx))
                             }
-                            className="text-red-500 hover:text-red-700 text-xs font-bold"
+                            className="text-danger hover:text-danger text-xs font-bold"
                             title="Eliminar fila"
                           >
                             X
@@ -1776,7 +1758,7 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                   },
                 ])
               }
-              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+              className="btn btn-primary text-xs px-3 py-1.5"
             >
               + Agregar fila
             </button>
@@ -1792,16 +1774,16 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
           onToggle={() => toggle("taphonomy")}
         />
         {openSections.taphonomy && (
-          <div className="border border-gray-200 rounded-b-lg p-4 bg-white space-y-4">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {TAPHONOMY_OPTIONS.map(({ key, label }) => (
                 <div key={key}>
-                  <label className="flex items-center gap-2 text-xs bg-gray-50 rounded px-2 py-1.5 hover:bg-gray-100 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!taphonomy[key]}
                       onChange={() => toggleTaph(key)}
-                      className="accent-blue-600"
+                      className="accent-accent"
                     />
                     <span>{label}</span>
                   </label>
@@ -1811,19 +1793,19 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
                       placeholder="Grado (0-5)"
                       value={weatheringDegree}
                       onChange={(e) => setWeatheringDegree(e.target.value)}
-                      className="mt-1 ml-6 border border-gray-300 rounded px-2 py-1 text-xs w-24"
+                      className="mt-1 ml-6 border border-line-strong rounded px-2 py-1 text-xs w-24"
                     />
                   )}
                 </div>
               ))}
             </div>
             <label className="block text-sm">
-              <span className="font-medium text-gray-700">Observaciones</span>
+              <span className="font-medium text-muted">Observaciones</span>
               <textarea
                 value={taphonomyObs}
                 onChange={(e) => setTaphonomyObs(e.target.value)}
                 rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-line-strong rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-accent"
               />
             </label>
           </div>
@@ -1831,12 +1813,12 @@ export default function ZonacionForm({ initialData, onSave, saving }: ZonacionFo
       </div>
 
       {/* ====== Save button ====== */}
-      <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 py-4 flex justify-end">
+      <div className="sticky bottom-0 bg-canvas border-t border-line py-4 flex justify-end">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={saving}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-semibold"
+          className="btn btn-primary px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
         >
           {saving ? "Guardando..." : "Guardar ficha"}
         </button>

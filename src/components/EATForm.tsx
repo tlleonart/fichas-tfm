@@ -99,16 +99,11 @@ const QUALITY_GROUPS = [
 /* ------------------------------------------------------------------ */
 
 interface EATFormProps {
-  initialData?: Record<string, any>;
-  onSave: (data: {
-    tipo: "eat";
-    individuo: string;
-    proyecto: string;
-    registrador: string;
-    fecha_registro: string;
-    data: Record<string, any>;
-  }) => Promise<void>;
+  initialData?: Record<string, any>;   // the saved `data` blob (method-specific keys)
+  registrador?: string;
+  fechaRegistro?: string;
   saving?: boolean;
+  onSave: (payload: { registrador: string; fechaRegistro: string; data: Record<string, any> }) => Promise<void>;
 }
 
 interface ManoData {
@@ -148,20 +143,20 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-line rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 transition text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-surface-2 hover:bg-surface-2 transition text-left"
       >
         <div>
-          <span className="font-semibold text-gray-800">{title}</span>
+          <span className="font-semibold text-ink">{title}</span>
           {subtitle && (
-            <span className="ml-2 text-sm text-gray-500">{subtitle}</span>
+            <span className="ml-2 text-sm text-faint">{subtitle}</span>
           )}
         </div>
-        <span className="text-gray-500 text-lg select-none">
-          {open ? "\u25B2" : "\u25BC"}
+        <span className="text-faint text-lg select-none">
+          {open ? "▲" : "▼"}
         </span>
       </button>
       {open && <div className="p-4 space-y-4">{children}</div>}
@@ -198,13 +193,13 @@ function CheckboxGrid({
       {items.map((item) => (
         <label
           key={item}
-          className="flex items-center gap-1.5 text-sm cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5"
+          className="flex items-center gap-1.5 text-sm cursor-pointer hover:bg-surface-2 rounded px-1 py-0.5"
         >
           <input
             type="checkbox"
             checked={!!checked[item]}
             onChange={(e) => onChange(item, e.target.checked)}
-            className="accent-blue-600 w-4 h-4"
+            className="accent-accent w-4 h-4"
           />
           <span className="truncate">{item}</span>
         </label>
@@ -217,56 +212,52 @@ function CheckboxGrid({
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
-export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
+export default function EATForm({ initialData, registrador: registradorProp, fechaRegistro: fechaRegistroProp, onSave, saving }: EATFormProps) {
   /* ---------- Context ---------- */
-  const [individuo, setIndividuo] = useState(initialData?.individuo ?? "");
-  const [proyecto, setProyecto] = useState(initialData?.proyecto ?? "");
-  const [registrador, setRegistrador] = useState(initialData?.registrador ?? "");
-  const [fechaRegistro, setFechaRegistro] = useState(initialData?.fecha_registro ?? "");
-  const [sexoEstimado, setSexoEstimado] = useState(initialData?.data?.sexo_estimado ?? "");
-  const [edadEstimada, setEdadEstimada] = useState(initialData?.data?.edad_estimada ?? "");
+  const [registrador, setRegistrador] = useState(registradorProp ?? "");
+  const [fechaRegistro, setFechaRegistro] = useState(fechaRegistroProp ?? "");
 
   /* ---------- Bone Inventory (IPO) ---------- */
   const [craneoChecked, setCraneoChecked] = useState<Record<string, boolean>>(
-    initialData?.data?.craneo ?? {}
+    initialData?.craneo ?? {}
   );
   const [vertebrasChecked, setVertebrasChecked] = useState<Record<string, boolean>>(
-    initialData?.data?.vertebras ?? {}
+    initialData?.vertebras ?? {}
   );
   const [largosChecked, setLargosChecked] = useState<Record<string, boolean>>(
-    initialData?.data?.huesosLargos ?? {}
+    initialData?.huesosLargos ?? {}
   );
   const [planosChecked, setPlanosChecked] = useState<Record<string, boolean>>(
-    initialData?.data?.huesosPlanos ?? {}
+    initialData?.huesosPlanos ?? {}
   );
   const [costillasChecked, setCostillasChecked] = useState<Record<string, boolean>>(
-    initialData?.data?.costillas ?? {}
+    initialData?.costillas ?? {}
   );
   const [mandibula, setMandibula] = useState<boolean>(
-    initialData?.data?.mandibula ?? false
+    initialData?.mandibula ?? false
   );
   const [hioides, setHioides] = useState<boolean>(
-    initialData?.data?.hioides ?? false
+    initialData?.hioides ?? false
   );
 
   const emptyMano: ManoData = { carpianos: 0, metacarpianos: 0, falProxMedias: 0, falDistales: 0 };
-  const [manoDer, setManoDer] = useState<ManoData>(initialData?.data?.manoDer ?? { ...emptyMano });
-  const [manoIzq, setManoIzq] = useState<ManoData>(initialData?.data?.manoIzq ?? { ...emptyMano });
+  const [manoDer, setManoDer] = useState<ManoData>(initialData?.manoDer ?? { ...emptyMano });
+  const [manoIzq, setManoIzq] = useState<ManoData>(initialData?.manoIzq ?? { ...emptyMano });
 
   const emptyPie: PieData = { tarsianos: 0, metatarsianos: 0, falProx: 0, falMedias: 0, falDistales: 0 };
-  const [pieDer, setPieDer] = useState<PieData>(initialData?.data?.pieDer ?? { ...emptyPie });
-  const [pieIzq, setPieIzq] = useState<PieData>(initialData?.data?.pieIzq ?? { ...emptyPie });
+  const [pieDer, setPieDer] = useState<PieData>(initialData?.pieDer ?? { ...emptyPie });
+  const [pieIzq, setPieIzq] = useState<PieData>(initialData?.pieIzq ?? { ...emptyPie });
 
   /* ---------- Bone Quality (ICH) ---------- */
   const emptyQuality: Record<string, QualityEntry> = Object.fromEntries(
     QUALITY_GROUPS.map((g) => [g.key, { value: 0, obs: "" }])
   );
   const [quality, setQuality] = useState<Record<string, QualityEntry>>(
-    initialData?.data?.quality ?? emptyQuality
+    initialData?.quality ?? emptyQuality
   );
 
   /* ---------- Observations ---------- */
-  const [observations, setObservations] = useState(initialData?.data?.observations ?? "");
+  const [observations, setObservations] = useState(initialData?.observations ?? "");
 
   /* ================================================================ */
   /*  Derived / computed values                                        */
@@ -300,14 +291,14 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
     () => manoIzq.carpianos + manoIzq.metacarpianos + manoIzq.falProxMedias + manoIzq.falDistales,
     [manoIzq]
   );
-  const manoDerPts = useMemo(
-    () => (manoDerTotal / MANO_TOTAL_BONES) * MANO_MAX_PTS,
-    [manoDerTotal]
-  );
-  const manoIzqPts = useMemo(
-    () => (manoIzqTotal / MANO_TOTAL_BONES) * MANO_MAX_PTS,
-    [manoIzqTotal]
-  );
+  /* hand (max 4 pts): carpianos/8 + metacarpianos/5 + falProxMedias/9 + falDistales/5 */
+  const handPts = (m: ManoData) =>
+    Math.min(1, m.carpianos / 8) +
+    Math.min(1, m.metacarpianos / 5) +
+    Math.min(1, m.falProxMedias / 9) +
+    Math.min(1, m.falDistales / 5);
+  const manoDerPts = useMemo(() => handPts(manoDer), [manoDer]);
+  const manoIzqPts = useMemo(() => handPts(manoIzq), [manoIzq]);
 
   /* Pie weighted points */
   const pieDerTotal = useMemo(
@@ -318,14 +309,15 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
     () => pieIzq.tarsianos + pieIzq.metatarsianos + pieIzq.falProx + pieIzq.falMedias + pieIzq.falDistales,
     [pieIzq]
   );
-  const pieDerPts = useMemo(
-    () => (pieDerTotal / PIE_TOTAL_BONES) * PIE_MAX_PTS,
-    [pieDerTotal]
-  );
-  const pieIzqPts = useMemo(
-    () => (pieIzqTotal / PIE_TOTAL_BONES) * PIE_MAX_PTS,
-    [pieIzqTotal]
-  );
+  /* foot (max 5 pts): tarsianos/7 + metatarsianos/5 + falProx/5 + falMedias/4 + falDistales/5 */
+  const footPts = (p: PieData) =>
+    Math.min(1, p.tarsianos / 7) +
+    Math.min(1, p.metatarsianos / 5) +
+    Math.min(1, p.falProx / 5) +
+    Math.min(1, p.falMedias / 4) +
+    Math.min(1, p.falDistales / 5);
+  const pieDerPts = useMemo(() => footPts(pieDer), [pieDer]);
+  const pieIzqPts = useMemo(() => footPts(pieIzq), [pieIzq]);
 
   /* Group present counts (for quality gating) */
   const groupCounts = useMemo(
@@ -370,8 +362,8 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
     return sum / filled.length;
   }, [quality, groupCounts]);
 
-  /* EAT = 100 - (IPO + ICH) / 2 */
-  const EAT = useMemo(() => 100 - (IPO + ICH) / 2, [IPO, ICH]);
+  /* EAT = 100 - (IPO * ICH) / 100 */
+  const EAT = useMemo(() => 100 - (IPO * ICH) / 100, [IPO, ICH]);
 
   const eatColor = useMemo(() => {
     if (EAT <= 20) return "bg-green-500";
@@ -423,14 +415,9 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSave({
-      tipo: "eat",
-      individuo,
-      proyecto,
       registrador,
-      fecha_registro: fechaRegistro,
+      fechaRegistro,
       data: {
-        sexo_estimado: sexoEstimado,
-        edad_estimada: edadEstimada,
         craneo: craneoChecked,
         vertebras: vertebrasChecked,
         huesosLargos: largosChecked,
@@ -466,13 +453,13 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
     opts?: { type?: string; placeholder?: string }
   ) => (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label className="text-sm font-medium text-muted">{label}</label>
       <input
         type={opts?.type ?? "text"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={opts?.placeholder}
-        className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-line-strong rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
       />
     </div>
   );
@@ -492,10 +479,10 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
     onUpdate: (side: "der" | "izq", field: string, val: number) => void
   ) => (
     <div>
-      <h4 className="font-medium text-gray-700 mb-2">{label}</h4>
+      <h4 className="font-medium text-muted mb-2">{label}</h4>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border border-gray-200 rounded">
-          <thead className="bg-gray-50">
+        <table className="w-full text-sm border border-line rounded">
+          <thead className="bg-surface-2">
             <tr>
               <th className="text-left px-2 py-1 border-b">Unidad</th>
               <th className="text-center px-2 py-1 border-b">Max</th>
@@ -505,9 +492,9 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
           </thead>
           <tbody>
             {units.map((u) => (
-              <tr key={u.key} className="border-b border-gray-100">
+              <tr key={u.key} className="border-b border-line">
                 <td className="px-2 py-1">{u.label}</td>
-                <td className="text-center px-2 py-1 text-gray-400">/{u.max}</td>
+                <td className="text-center px-2 py-1 text-faint">/{u.max}</td>
                 <td className="text-center px-2 py-1">
                   <input
                     type="number"
@@ -517,7 +504,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
                     onChange={(e) =>
                       onUpdate("der", u.key, Math.min(u.max, Math.max(0, +e.target.value || 0)))
                     }
-                    className="w-14 border border-gray-300 rounded text-center py-0.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-14 border border-line-strong rounded text-center py-0.5 focus:ring-2 focus:ring-accent focus:outline-none"
                   />
                 </td>
                 <td className="text-center px-2 py-1">
@@ -529,13 +516,13 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
                     onChange={(e) =>
                       onUpdate("izq", u.key, Math.min(u.max, Math.max(0, +e.target.value || 0)))
                     }
-                    className="w-14 border border-gray-300 rounded text-center py-0.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-14 border border-line-strong rounded text-center py-0.5 focus:ring-2 focus:ring-accent focus:outline-none"
                   />
                 </td>
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-50 font-medium">
+          <tfoot className="bg-surface-2 font-medium">
             <tr>
               <td className="px-2 py-1">Total huesos</td>
               <td className="text-center px-2 py-1">/{totalBones}</td>
@@ -560,22 +547,18 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-4xl mx-auto pb-12">
-      <h2 className="text-2xl font-bold text-gray-900">
+      <h2 className="text-2xl font-bold text-ink">
         EAT &mdash; Estado de Afectaci&oacute;n Tafon&oacute;mica
       </h2>
-      <p className="text-sm text-gray-500">Serrulla &amp; V&aacute;zquez (2019)</p>
+      <p className="text-sm text-faint">Serrulla &amp; V&aacute;zquez (2019)</p>
 
       {/* ============================================================ */}
       {/*  1. Context Data                                              */}
       {/* ============================================================ */}
       <Section title="1. Datos de Contexto">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {textInput("Individuo", individuo, setIndividuo, { placeholder: "Ej: IND-001" })}
-          {textInput("Proyecto", proyecto, setProyecto)}
           {textInput("Registrador", registrador, setRegistrador)}
           {textInput("Fecha de registro", fechaRegistro, setFechaRegistro, { type: "date" })}
-          {textInput("Sexo estimado", sexoEstimado, setSexoEstimado, { placeholder: "M / F / Indet." })}
-          {textInput("Edad estimada", edadEstimada, setEdadEstimada, { placeholder: "Ej: 30-40 a." })}
         </div>
       </Section>
 
@@ -583,11 +566,11 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
       {/*  2. Bone Inventory (IPO)                                      */}
       {/* ============================================================ */}
       <Section
-        title="2. Inventario \u00D3seo (IPO)"
-        subtitle={`${totalPresent.toFixed(1)} / 115 \u2014 IPO = ${IPO.toFixed(1)}%`}
+        title="2. Inventario Óseo (IPO)"
+        subtitle={`${totalPresent.toFixed(1)} / 115 — IPO = ${IPO.toFixed(1)}%`}
       >
         {/* Cráneo */}
-        <Section title="Cr\u00E1neo" subtitle={`${countChecked(craneoChecked)} / 18`} defaultOpen={false}>
+        <Section title="Cráneo" subtitle={`${countChecked(craneoChecked)} / 18`} defaultOpen={false}>
           <CheckboxGrid
             items={CRANEO_BONES}
             checked={craneoChecked}
@@ -597,10 +580,10 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
         </Section>
 
         {/* Vértebras */}
-        <Section title="V\u00E9rtebras" subtitle={`${countChecked(vertebrasChecked)} / 32`} defaultOpen={false}>
+        <Section title="Vértebras" subtitle={`${countChecked(vertebrasChecked)} / 32`} defaultOpen={false}>
           <div className="space-y-3">
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Cervicales (C1-C7)</p>
+              <p className="text-xs font-semibold text-faint mb-1">Cervicales (C1-C7)</p>
               <CheckboxGrid
                 items={VERTEBRAS_CERVICALES}
                 checked={vertebrasChecked}
@@ -609,7 +592,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               />
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Tor&aacute;cicas (T1-T12)</p>
+              <p className="text-xs font-semibold text-faint mb-1">Tor&aacute;cicas (T1-T12)</p>
               <CheckboxGrid
                 items={VERTEBRAS_TORACICAS}
                 checked={vertebrasChecked}
@@ -618,7 +601,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               />
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Lumbares (L1-L5)</p>
+              <p className="text-xs font-semibold text-faint mb-1">Lumbares (L1-L5)</p>
               <CheckboxGrid
                 items={VERTEBRAS_LUMBARES}
                 checked={vertebrasChecked}
@@ -627,7 +610,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               />
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Sacras (S1-S5)</p>
+              <p className="text-xs font-semibold text-faint mb-1">Sacras (S1-S5)</p>
               <CheckboxGrid
                 items={VERTEBRAS_SACRAS}
                 checked={vertebrasChecked}
@@ -636,7 +619,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               />
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Cocc&iacute;geas (Co1-Co3)</p>
+              <p className="text-xs font-semibold text-faint mb-1">Cocc&iacute;geas (Co1-Co3)</p>
               <CheckboxGrid
                 items={VERTEBRAS_COCCIGEAS}
                 checked={vertebrasChecked}
@@ -684,7 +667,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               type="checkbox"
               checked={mandibula}
               onChange={(e) => setMandibula(e.target.checked)}
-              className="accent-blue-600 w-4 h-4"
+              className="accent-accent w-4 h-4"
             />
             <span className="font-medium">Mand&iacute;bula</span>
           </label>
@@ -693,7 +676,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
               type="checkbox"
               checked={hioides}
               onChange={(e) => setHioides(e.target.checked)}
-              className="accent-blue-600 w-4 h-4"
+              className="accent-accent w-4 h-4"
             />
             <span className="font-medium">Hioides</span>
           </label>
@@ -706,7 +689,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
           defaultOpen={false}
         >
           {renderExtremityTable(
-            "Manos (ponderaci\u00F3n: max 4 pts por mano)",
+            "Manos (ponderación: max 4 pts por mano)",
             MANO_UNITS,
             manoDer as unknown as Record<string, number>,
             manoIzq as unknown as Record<string, number>,
@@ -727,7 +710,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
           defaultOpen={false}
         >
           {renderExtremityTable(
-            "Pies (ponderaci\u00F3n: max 5 pts por pie)",
+            "Pies (ponderación: max 5 pts por pie)",
             PIE_UNITS,
             pieDer as unknown as Record<string, number>,
             pieIzq as unknown as Record<string, number>,
@@ -742,18 +725,18 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
         </Section>
 
         {/* IPO summary bar */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-accent-soft border border-line rounded-lg p-3">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-semibold text-blue-800">\u00CDndice de Preservaci\u00F3n \u00D3sea (IPO)</span>
-            <span className="text-lg font-bold text-blue-700">{IPO.toFixed(1)}%</span>
+            <span className="text-sm font-semibold text-accent">Índice de Preservación Ósea (IPO)</span>
+            <span className="text-lg font-bold text-accent">{IPO.toFixed(1)}%</span>
           </div>
-          <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all"
+              className="h-full bg-accent rounded-full transition-all"
               style={{ width: `${Math.min(100, IPO)}%` }}
             />
           </div>
-          <p className="text-xs text-blue-600 mt-1">
+          <p className="text-xs text-accent mt-1">
             {totalPresent.toFixed(1)} presentes de 115 posibles
           </p>
         </div>
@@ -766,7 +749,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
         title="3. Calidad del Hueso (ICH)"
         subtitle={`ICH = ${ICH.toFixed(1)}%`}
       >
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm text-faint mb-3">
           Para cada grupo que tenga huesos presentes, indique la calidad del hueso con el slider (0-100%) y, opcionalmente, una observaci&oacute;n.
         </p>
         <div className="space-y-4">
@@ -775,16 +758,16 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
             return (
               <div
                 key={g.key}
-                className={`border rounded-lg p-3 transition ${hasPresence ? "border-gray-300 bg-white" : "border-gray-100 bg-gray-50 opacity-50"}`}
+                className={`border rounded-lg p-3 transition ${hasPresence ? "border-line-strong bg-surface" : "border-line bg-surface-2 opacity-50"}`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">{g.label}</span>
+                  <span className="text-sm font-medium text-muted">{g.label}</span>
                   {hasPresence ? (
-                    <span className="text-sm font-bold text-gray-800">
+                    <span className="text-sm font-bold text-ink">
                       {quality[g.key]?.value ?? 0}%
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-400">Sin huesos presentes</span>
+                    <span className="text-xs text-faint">Sin huesos presentes</span>
                   )}
                 </div>
                 {hasPresence && (
@@ -796,9 +779,9 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
                       step={5}
                       value={quality[g.key]?.value ?? 0}
                       onChange={(e) => updateQuality(g.key, "value", +e.target.value)}
-                      className="w-full accent-emerald-600"
+                      className="w-full accent-accent"
                     />
-                    <div className="flex justify-between text-xs text-gray-400 mb-2">
+                    <div className="flex justify-between text-xs text-faint mb-2">
                       <span>0%</span>
                       <span>50%</span>
                       <span>100%</span>
@@ -807,8 +790,8 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
                       type="text"
                       value={quality[g.key]?.obs ?? ""}
                       onChange={(e) => updateQuality(g.key, "obs", e.target.value)}
-                      placeholder="Observaci\u00F3n (opcional)"
-                      className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Observación (opcional)"
+                      className="w-full border border-line rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                   </>
                 )}
@@ -818,18 +801,18 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
         </div>
 
         {/* ICH summary bar */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-4">
+        <div className="bg-accent-soft border border-line rounded-lg p-3 mt-4">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-semibold text-emerald-800">\u00CDndice de Calidad del Hueso (ICH)</span>
-            <span className="text-lg font-bold text-emerald-700">{ICH.toFixed(1)}%</span>
+            <span className="text-sm font-semibold text-accent">Índice de Calidad del Hueso (ICH)</span>
+            <span className="text-lg font-bold text-accent">{ICH.toFixed(1)}%</span>
           </div>
-          <div className="w-full h-3 bg-emerald-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all"
+              className="h-full bg-accent rounded-full transition-all"
               style={{ width: `${Math.min(100, ICH)}%` }}
             />
           </div>
-          <p className="text-xs text-emerald-600 mt-1">
+          <p className="text-xs text-accent mt-1">
             Promedio de calidad de los {QUALITY_GROUPS.filter((g) => groupCounts[g.key as keyof typeof groupCounts] > 0).length} grupos con presencia
           </p>
         </div>
@@ -841,13 +824,13 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
       <Section title="4. Resultado Final &mdash; EAT">
         <div className="text-center space-y-4 py-4">
           <div className="grid sm:grid-cols-3 gap-4 text-sm">
-            <div className="bg-blue-50 rounded-lg p-3">
-              <p className="text-blue-600 font-medium">IPO</p>
-              <p className="text-2xl font-bold text-blue-800">{IPO.toFixed(1)}%</p>
+            <div className="bg-accent-soft rounded-lg p-3">
+              <p className="text-accent font-medium">IPO</p>
+              <p className="text-2xl font-bold text-accent">{IPO.toFixed(1)}%</p>
             </div>
-            <div className="bg-emerald-50 rounded-lg p-3">
-              <p className="text-emerald-600 font-medium">ICH</p>
-              <p className="text-2xl font-bold text-emerald-800">{ICH.toFixed(1)}%</p>
+            <div className="bg-accent-soft rounded-lg p-3">
+              <p className="text-accent font-medium">ICH</p>
+              <p className="text-2xl font-bold text-accent">{ICH.toFixed(1)}%</p>
             </div>
             <div className={`rounded-lg p-3 text-white ${eatColor}`}>
               <p className="font-medium opacity-90">EAT</p>
@@ -855,8 +838,8 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
             </div>
           </div>
 
-          <p className="text-sm text-gray-500">
-            EAT = 100 &minus; (IPO + ICH) / 2 = 100 &minus; ({IPO.toFixed(1)} + {ICH.toFixed(1)}) / 2
+          <p className="text-sm text-faint">
+            EAT = 100 − (IPO × ICH) / 100 = 100 − ({IPO.toFixed(1)} × {ICH.toFixed(1)}) / 100
           </p>
 
           <div className={`inline-block px-4 py-2 rounded-full text-white font-semibold ${eatColor}`}>
@@ -883,7 +866,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
           onChange={(e) => setObservations(e.target.value)}
           rows={4}
           placeholder="Observaciones generales sobre el estado tafonómico del individuo..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          className="w-full border border-line-strong rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent resize-y"
         />
       </Section>
 
@@ -894,7 +877,7 @@ export default function EATForm({ initialData, onSave, saving }: EATFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="bg-gray-900 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-primary px-8 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "Guardando..." : "Guardar ficha"}
         </button>

@@ -1,34 +1,81 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import "./globals.css";
+import ConvexClientProvider from "./ConvexClientProvider";
+import ThemeToggle from "@/components/ThemeToggle";
+import LogoutButton from "@/components/LogoutButton";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
+const serif = Source_Serif_4({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "Fichas Osteológicas",
-  description: "Registro digital de fichas de Zonación y EAT",
+  title: "Registro Osteológico",
+  description:
+    "Registro y análisis de fichas osteológicas — Método de Zonación (Knüsel & Outram 2004) y EAT (Serrulla & Vázquez 2019).",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+// Set the theme before paint to avoid a flash of the wrong theme (FOUC).
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const authed = (await cookies()).get("osteo_auth")?.value === process.env.AUTH_TOKEN;
+
   return (
-    <html lang="es" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-gray-50 font-[family-name:var(--font-geist)]">
-        <nav className="bg-gray-900 text-white shadow">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link href="/" className="text-lg font-bold tracking-wide hover:text-gray-300">
-              Fichas Osteológicas
-            </Link>
-            <div className="flex gap-4 text-sm">
-              <Link href="/" className="hover:text-gray-300">Inicio</Link>
-              <Link href="/fichas" className="hover:text-gray-300">Mis Fichas</Link>
+    <html lang="es" className={`${geist.variable} ${serif.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-dvh flex flex-col">
+        <ConvexClientProvider>
+          <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+              <Link href={authed ? "/" : "/login"} className="group flex items-baseline gap-2">
+                <span className="font-serif text-lg font-semibold tracking-tight text-ink">
+                  Registro Osteológico
+                </span>
+                <span className="hidden text-xs text-faint sm:inline">Zonación · EAT</span>
+              </Link>
+              <nav className="flex items-center gap-1">
+                {authed && (
+                  <>
+                    <NavLink href="/individuos">Individuos</NavLink>
+                    <NavLink href="/analisis">Análisis</NavLink>
+                    <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+                  </>
+                )}
+                <ThemeToggle />
+                {authed && <LogoutButton />}
+              </nav>
             </div>
-          </div>
-        </nav>
-        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
-          {children}
-        </main>
+          </header>
+
+          <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>
+
+          <footer className="border-t border-line">
+            <div className="mx-auto max-w-6xl px-5 py-5 text-xs text-faint">
+              Registro Osteológico — herramienta de investigación. Métodos: Knüsel &amp;
+              Outram (2004) · Serrulla &amp; Vázquez (2019).
+            </div>
+          </footer>
+        </ConvexClientProvider>
       </body>
     </html>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-md px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+    >
+      {children}
+    </Link>
   );
 }

@@ -2,57 +2,62 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="space-y-8">
-      <div className="text-center py-8">
-        <h1 className="text-3xl font-bold text-gray-900">Fichas de Registro Osteológico</h1>
-        <p className="mt-2 text-gray-600">Seleccioná el tipo de ficha que querés completar</p>
-      </div>
+    <div className="space-y-12">
+      {/* Hero */}
+      <section className="max-w-3xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          Antropología forense · Tafonomía
+        </p>
+        <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink sm:text-5xl">
+          Registro y análisis osteológico
+        </h1>
+        <p className="mt-4 text-lg leading-relaxed text-muted">
+          Plataforma de registro digital y análisis cuantitativo de restos óseos.
+          Cada individuo integra dos métodos complementarios y permite cruzar sus
+          resultados a nivel individuo, población y total.
+        </p>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link href="/individuos" className="btn btn-primary">
+            Ver individuos
+          </Link>
+          <Link href="/individuos/nuevo" className="btn btn-ghost">
+            Nuevo individuo
+          </Link>
+          <Link href="/analisis" className="btn btn-ghost">
+            Análisis comparativo
+          </Link>
+        </div>
+      </section>
 
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <Link
-          href="/nueva/zonacion"
-          className="block border-2 border-gray-200 rounded-xl p-6 hover:border-blue-500 hover:shadow-lg transition-all group"
-        >
-          <div className="text-center space-y-3">
-            <div className="text-4xl">🦴</div>
-            <h2 className="text-xl font-bold text-gray-900 group-hover:text-blue-600">
-              Método de Zonación
-            </h2>
-            <p className="text-sm text-gray-500">Knüsel &amp; Outram (2004)</p>
-            <p className="text-sm text-gray-600">
-              Registro de zonas anatómicas presentes por elemento óseo. Cálculo de % de completitud. Análisis de fractura (FFI).
-            </p>
-            <span className="inline-block mt-2 text-sm font-medium text-blue-600 group-hover:text-blue-700">
-              Crear ficha →
-            </span>
+      {/* Methods */}
+      <section className="grid gap-5 md:grid-cols-2">
+        <article className="card p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl font-semibold text-ink">Método de Zonación</h2>
+            <span className="pill">Cuantitativo</span>
           </div>
-        </Link>
+          <p className="mt-1 text-sm text-faint">Knüsel &amp; Outram (2004)</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Registro de zonas anatómicas presentes por elemento óseo. Calcula
+            completitud por elemento y global, e incorpora análisis de fractura (FFI)
+            y alteraciones tafonómicas.
+          </p>
+        </article>
 
-        <Link
-          href="/nueva/eat"
-          className="block border-2 border-gray-200 rounded-xl p-6 hover:border-red-500 hover:shadow-lg transition-all group"
-        >
-          <div className="text-center space-y-3">
-            <div className="text-4xl">📊</div>
-            <h2 className="text-xl font-bold text-gray-900 group-hover:text-red-600">
+        <article className="card p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl font-semibold text-ink">
               Estado de Afectación Tafonómica
             </h2>
-            <p className="text-sm text-gray-500">Serrulla &amp; Vázquez (2019)</p>
-            <p className="text-sm text-gray-600">
-              Índice de Preservación Ósea + Calidad del Hueso. Cálculo cuantitativo del EAT.
-            </p>
-            <span className="inline-block mt-2 text-sm font-medium text-red-600 group-hover:text-red-700">
-              Crear ficha →
-            </span>
+            <span className="pill">Semicuantitativo</span>
           </div>
-        </Link>
-      </div>
-
-      <div className="text-center">
-        <Link href="/fichas" className="inline-block bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
-          Ver fichas guardadas
-        </Link>
-      </div>
+          <p className="mt-1 text-sm text-faint">Serrulla &amp; Vázquez (2019)</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Integra el Índice de Preservación Ósea (objetivo) y el Índice de Calidad
+            del Hueso (estimación del valorador) en el EAT&nbsp;=&nbsp;100&nbsp;−&nbsp;(IPO×ICH)/100.
+          </p>
+        </article>
+      </section>
     </div>
   );
 }

@@ -32,14 +32,16 @@ lado (Izq/Der). Es la base para cuantificar fragmentación y representación.
 | Vértebras (C/T/L) | 96 | Fémur | 22 |
 | Sacro | 20 | Tibia | 20 |
 | Esternón | 3 | Peroné | 12 |
-| Clavícula | 6 | Mano | 64 |
-| Costillas | 72 | Pie | 78 |
-| Escápula | 18 | **Total** | **526** |
+| Clavícula | 6 | Mano | 130 |
+| Costillas | 72 | Pie | 144 |
+| Escápula | 18 | **Total** | **658** |
 | Húmero | 22 | | |
 | Radio | 22 | | |
 
 ### 2.2 Métricas derivadas
-- **Completitud global** = zonas presentes / 526 × 100.
+- **Completitud global** = zonas presentes / 658 × 100. Las falanges de mano y pie se
+  registran **por dedo** (I–V × posición × 3 zonas × lado); el dedo I no tiene falange medial,
+  por lo que hay 14 falanges por lado (5 proximales + 4 mediales + 5 distales).
 - **Completitud por elemento** = zonas presentes / máximo del elemento × 100
   (porcentaje de completitud, *sensu* Morlan 1994).
 - **Elementos presentes** = elementos con ≥ 1 zona (de 17).

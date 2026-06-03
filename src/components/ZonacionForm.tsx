@@ -187,6 +187,84 @@ function countChecked(obj: Record<string, boolean>): number {
   return Object.values(obj).filter(Boolean).length;
 }
 
+/* Per-digit phalanx model. Digit I (pollex/hallux) has no medial phalanx. */
+const PHALANX_DIGITS: { d: string; pos: ("P" | "M" | "D")[] }[] = [
+  { d: "I", pos: ["P", "D"] },
+  { d: "II", pos: ["P", "M", "D"] },
+  { d: "III", pos: ["P", "M", "D"] },
+  { d: "IV", pos: ["P", "M", "D"] },
+  { d: "V", pos: ["P", "M", "D"] },
+];
+const PHALANX_POS_LABEL: Record<string, string> = {
+  P: "Proximal",
+  M: "Medial",
+  D: "Distal",
+};
+
+/**
+ * Per-digit phalanx grid: each digit's phalanges (I–V × position) with the 3
+ * standard zones (Z1 proximal articulation, Z2 distal condyle, Z3 diaphysis)
+ * per side. Keys are ASCII: `${prefix}_d${digit}_${pos}_z${z}_${side}`.
+ */
+function renderPhalanges(
+  prefix: string,
+  state: Record<string, boolean>,
+  toggler: (k: string) => void,
+) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-xs border-collapse w-full">
+        <thead>
+          <tr className="bg-surface-2">
+            <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>
+              Dedo / Falange
+            </th>
+            <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
+              Izquierda
+            </th>
+            <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
+              Derecha
+            </th>
+          </tr>
+          <tr className="bg-surface-2">
+            {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
+              <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">
+                {lbl}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {PHALANX_DIGITS.flatMap(({ d, pos }) =>
+            pos.map((p) => (
+              <tr key={`${d}_${p}`} className="hover:bg-surface-2">
+                <td className="border border-line-strong px-2 py-1 font-medium whitespace-nowrap">
+                  {d} · {PHALANX_POS_LABEL[p]}
+                </td>
+                {(["L", "R"] as const).flatMap((side) =>
+                  range(1, 3).map((z) => {
+                    const key = `${prefix}_d${d}_${p}_z${z}_${side}`;
+                    return (
+                      <td key={`${side}${z}`} className="border border-line-strong px-2 py-1 text-center">
+                        <input
+                          type="checkbox"
+                          checked={!!state[key]}
+                          onChange={() => toggler(key)}
+                          className="accent-accent"
+                        />
+                      </td>
+                    );
+                  }),
+                )}
+              </tr>
+            )),
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
@@ -1307,57 +1385,11 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               </table>
             </div>
 
-            {/* Phalanges */}
+            {/* Phalanges (per digit, I–V) */}
             <h4 className="text-sm font-semibold text-muted">
-              Falanges (prox/med/dist) - 3 zonas c/u
+              Falanges por dedo (I–V) — 3 zonas c/u (Z1 base · Z2 cabeza · Z3 diáfisis)
             </h4>
-            <div className="overflow-x-auto">
-              <table className="text-xs border-collapse w-full">
-                <thead>
-                  <tr className="bg-surface-2">
-                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>
-                      Falange
-                    </th>
-                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
-                      Izquierda
-                    </th>
-                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>
-                      Derecha
-                    </th>
-                  </tr>
-                  <tr className="bg-surface-2">
-                    {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">
-                        {lbl}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(["Prox", "Med", "Dist"] as const).map((ph) => (
-                    <tr key={ph} className="hover:bg-surface-2">
-                      <td className="border border-line-strong px-2 py-1 font-medium">{ph}</td>
-                      {range(1, 3).map((z) => {
-                        const key = `hPh${ph}_z${z}_L`;
-                        return (
-                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
-                          </td>
-                        );
-                      })}
-                      {range(1, 3).map((z) => {
-                        const key = `hPh${ph}_z${z}_R`;
-                        return (
-                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {renderPhalanges("hPh", handZones, toggleHand)}
 
             {/* Carpals */}
             <h4 className="text-sm font-semibold text-muted">Carpos - presencia L/R</h4>
@@ -1446,49 +1478,11 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               </table>
             </div>
 
-            {/* Phalanges */}
+            {/* Phalanges (per digit, I–V) */}
             <h4 className="text-sm font-semibold text-muted">
-              Falanges (prox/med/dist) - 3 zonas c/u
+              Falanges por dedo (I–V) — 3 zonas c/u (Z1 base · Z2 cabeza · Z3 diáfisis)
             </h4>
-            <div className="overflow-x-auto">
-              <table className="text-xs border-collapse w-full">
-                <thead>
-                  <tr className="bg-surface-2">
-                    <th className="border border-line-strong px-2 py-1 text-left" rowSpan={2}>Falange</th>
-                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Izquierda</th>
-                    <th className="border border-line-strong px-2 py-1 text-center" colSpan={3}>Derecha</th>
-                  </tr>
-                  <tr className="bg-surface-2">
-                    {["Z1", "Z2", "Z3", "Z1", "Z2", "Z3"].map((lbl, i) => (
-                      <th key={`${lbl}_${i}`} className="border border-line-strong px-2 py-1 text-center">{lbl}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(["Prox", "Med", "Dist"] as const).map((ph) => (
-                    <tr key={ph} className="hover:bg-surface-2">
-                      <td className="border border-line-strong px-2 py-1 font-medium">{ph}</td>
-                      {range(1, 3).map((z) => {
-                        const key = `fPh${ph}_z${z}_L`;
-                        return (
-                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
-                          </td>
-                        );
-                      })}
-                      {range(1, 3).map((z) => {
-                        const key = `fPh${ph}_z${z}_R`;
-                        return (
-                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {renderPhalanges("fPh", footZones, toggleFoot)}
 
             {/* Calcaneus */}
             <h4 className="text-sm font-semibold text-muted">Calcáneo (5 zonas, L/R)</h4>

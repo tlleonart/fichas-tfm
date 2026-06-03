@@ -116,7 +116,9 @@ export function computeEAT(data: Record<string, unknown>): EATMetrics {
 /*  Zonación (Knüsel & Outram 2004)                                   */
 /* ================================================================== */
 
-/** Max zones per element (keyed by the data field). Sum = 526. */
+/** Max zones per element (keyed by the data field). Sum = 658.
+ *  Hand/foot phalanges are recorded per digit (I–V × position × 3 zones × L/R):
+ *  14 phalanges/side × 3 zones × 2 = 84, included in hand_zones/foot_zones. */
 export const ZONATION_ELEMENT_MAX: Record<string, number> = {
   cranium_zones: 15,
   mandible_zones: 14,
@@ -133,8 +135,8 @@ export const ZONATION_ELEMENT_MAX: Record<string, number> = {
   femur_zones: 22,
   tibia_zones: 20,
   fibula_zones: 12,
-  hand_zones: 64,
-  foot_zones: 78,
+  hand_zones: 130,
+  foot_zones: 144,
 };
 
 export const ZONATION_TOTAL_ZONES = Object.values(ZONATION_ELEMENT_MAX).reduce(

@@ -168,6 +168,16 @@ function Section({
 /*  Checkbox grid helper                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Convex object field names must be ASCII. Bone labels carry accents
+ * ("Clavícula der"), so we store state under a diacritic-stripped key while
+ * still displaying the accented label. Metrics count truthy values regardless
+ * of key, so this is safe.
+ */
+function asciiKey(s: string): string {
+  return s.normalize("NFD").replace(/[^\x00-\x7F]/g, "");
+}
+
 function CheckboxGrid({
   items,
   checked,
@@ -197,8 +207,8 @@ function CheckboxGrid({
         >
           <input
             type="checkbox"
-            checked={!!checked[item]}
-            onChange={(e) => onChange(item, e.target.checked)}
+            checked={!!checked[asciiKey(item)]}
+            onChange={(e) => onChange(asciiKey(item), e.target.checked)}
             className="accent-accent w-4 h-4"
           />
           <span className="truncate">{item}</span>

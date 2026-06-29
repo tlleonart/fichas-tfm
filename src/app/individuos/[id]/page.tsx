@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import RevisionesBanner, {
+  type RevisionPendiente,
+} from "@/components/RevisionesBanner";
 
 interface EATMetrics {
   ipo: number;
@@ -43,6 +46,10 @@ export default function IndividuoDetailPage() {
   const eat = fichas.find((f) => f.tipo === "eat");
   const zm = zon?.metricas as ZonMetrics | undefined;
   const em = eat?.metricas as EATMetrics | undefined;
+
+  // Corrección metodológica (SDD §6): banners por revisión pendiente. Hoy solo
+  // las fichas de zonación reciben revisiones; cada banner ancla al editor.
+  const zonRevisiones = (zon?.revisionesPendientes ?? []) as RevisionPendiente[];
 
   async function handleDelete() {
     if (!confirm("¿Eliminar este individuo y todas sus fichas? No se puede deshacer.")) return;
@@ -86,6 +93,12 @@ export default function IndividuoDetailPage() {
         </div>
       </header>
 
+      {/* Revisiones pendientes (corrección metodológica) */}
+      <RevisionesBanner
+        revisiones={zonRevisiones}
+        fichaHref={`/individuos/${id}/zonacion`}
+      />
+
       {/* Ficha slots */}
       <section className="grid gap-5 md:grid-cols-2">
         <FichaCard
@@ -97,7 +110,7 @@ export default function IndividuoDetailPage() {
           {zm && (
             <div className="grid grid-cols-2 gap-3">
               <Stat label="Completitud global" value={`${zm.completitudGlobal}%`} />
-              <Stat label="Elementos presentes" value={`${zm.elementosPresentes}/17`} />
+              <Stat label="Elementos presentes" value={`${zm.elementosPresentes}/18`} />
               <Stat label="FFI (frescas/secas)" value={`${zm.ffi.frescas}/${zm.ffi.secas}`} />
               <Stat label="Alteraciones" value={String(zm.alteracionesCount)} />
             </div>

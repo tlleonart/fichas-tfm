@@ -23,6 +23,20 @@ function Coverage({ on, label }: { on: boolean; label: string }) {
   );
 }
 
+/** Badge contador de revisiones pendientes (corrección metodológica, SDD §6). */
+function RevisionesBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="pill"
+      style={{ background: "var(--danger)", color: "#fff", borderColor: "transparent" }}
+      title={`${count} revisión(es) pendiente(s) tras la corrección metodológica`}
+    >
+      {count} {count === 1 ? "revisión" : "revisiones"}
+    </span>
+  );
+}
+
 export default function IndividuosPage() {
   const individuos = useQuery(api.individuos.listar, {});
 
@@ -62,6 +76,7 @@ export default function IndividuosPage() {
                   <th className="px-4 py-3 font-semibold">Sexo</th>
                   <th className="px-4 py-3 font-semibold">Edad</th>
                   <th className="px-4 py-3 font-semibold">Cobertura</th>
+                  <th className="px-4 py-3 font-semibold">Revisiones</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,6 +105,13 @@ export default function IndividuosPage() {
                         <Coverage on={ind.tieneEat} label="EAT" />
                       </div>
                     </td>
+                    <td className="px-4 py-3">
+                      {ind.revisionesPendientesCount > 0 ? (
+                        <RevisionesBadge count={ind.revisionesPendientesCount} />
+                      ) : (
+                        <span className="text-faint">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -111,9 +133,10 @@ export default function IndividuosPage() {
                 <div className="mt-1 text-sm text-faint">
                   {ind.sexoEstimado || "sexo —"} · {ind.edadEstimada || "edad —"}
                 </div>
-                <div className="mt-3 flex gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   <Coverage on={ind.tieneZonacion} label="Zonación" />
                   <Coverage on={ind.tieneEat} label="EAT" />
+                  <RevisionesBadge count={ind.revisionesPendientesCount} />
                 </div>
               </Link>
             ))}

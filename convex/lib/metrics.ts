@@ -116,14 +116,23 @@ export function computeEAT(data: Record<string, unknown>): EATMetrics {
 /*  Zonación (Knüsel & Outram 2004)                                   */
 /* ================================================================== */
 
-/** Max zones per element (keyed by the data field). Sum = 658.
+/** Max zones per element (keyed by the data field). Sum = 635.
+ *  Operacionalización del sistema de Knüsel & Outram (2004): los totales por
+ *  elemento son la implementación de esta app, no cifras canónicas del paper.
  *  Hand/foot phalanges are recorded per digit (I–V × position × 3 zones × L/R):
- *  14 phalanges/side × 3 zones × 2 = 84, included in hand_zones/foot_zones. */
+ *  14 phalanges/side × 3 zones × 2 = 84, included in hand_zones/foot_zones.
+ *
+ *  Corrección metodológica 2026-06 (SDD-correccion-metodologica-zonacion):
+ *   - sacrum_zones 20 → 4  (4 zonas K&O Fig 2d, no 5 segmentos × 4)
+ *   - mandible_zones 14 → 7 (7 zonas-tipo; el lado L/R es observación, no denominador)
+ *   - foot_zones 144 → 142  (la rótula sale de "pie")
+ *   - patella_zones: 2      (rótula como elemento propio: pat_L, pat_R)
+ *  Total 658 → 635; elementos 17 → 18. */
 export const ZONATION_ELEMENT_MAX: Record<string, number> = {
   cranium_zones: 15,
-  mandible_zones: 14,
+  mandible_zones: 7,
   vertebrae_zones: 96,
-  sacrum_zones: 20,
+  sacrum_zones: 4,
   sternum_zones: 3,
   clavicle_zones: 6,
   rib_zones: 72,
@@ -136,13 +145,14 @@ export const ZONATION_ELEMENT_MAX: Record<string, number> = {
   tibia_zones: 20,
   fibula_zones: 12,
   hand_zones: 130,
-  foot_zones: 144,
+  foot_zones: 142,
+  patella_zones: 2,
 };
 
 export const ZONATION_TOTAL_ZONES = Object.values(ZONATION_ELEMENT_MAX).reduce(
   (a, b) => a + b,
   0,
-); // 526
+); // 635
 
 export interface ZonacionMetrics {
   completitudGlobal: number; // % of all possible zones present
@@ -154,13 +164,46 @@ export interface ZonacionMetrics {
   fragmentosCount: number; // unidentifiable fragments tallied
 }
 
+/** Count the TRUE entries of an object whose key matches `re`. */
+function countTrueMatching(o: Dict, re: RegExp): number {
+  if (!o || typeof o !== "object") return 0;
+  return Object.entries(o as Record<string, unknown>).filter(
+    ([k, v]) => re.test(k) && Boolean(v),
+  ).length;
+}
+
+/** Count the TRUE entries of an object whose key does NOT match `re`. */
+function countTrueExcluding(o: Dict, re: RegExp): number {
+  if (!o || typeof o !== "object") return 0;
+  return Object.entries(o as Record<string, unknown>).filter(
+    ([k, v]) => !re.test(k) && Boolean(v),
+  ).length;
+}
+
 export function computeZonacion(data: Record<string, unknown>): ZonacionMetrics {
   const completitudPorElemento: Record<string, number> = {};
   let zonasPresentes = 0;
   let elementosPresentes = 0;
 
   for (const [field, max] of Object.entries(ZONATION_ELEMENT_MAX)) {
-    const present = countTrue(data[field] as Dict);
+    let present: number;
+    if (field === "sacrum_zones") {
+      // K&O 4 zonas: contamos las claves canónicas nuevas (sac_z1..4),
+      // ignorando las viejas (S{1..5}_z{1..4}) que la migración preserva.
+      present = countTrueMatching(data.sacrum_zones as Dict, /^sac_z[1-4]$/);
+    } else if (field === "mandible_zones") {
+      // 7 zonas-tipo: contamos mand_z1..7 (el lado L/R es observación, no
+      // denominador). Las claves viejas mand_{1..7}_{L|R} se preservan e ignoran.
+      present = countTrueMatching(data.mandible_zones as Dict, /^mand_z[1-7]$/);
+    } else if (field === "patella_zones") {
+      // Rótula como elemento propio: pat_L, pat_R.
+      present = countTrue(data.patella_zones as Dict);
+    } else if (field === "foot_zones") {
+      // La rótula salió de "pie": no contamos fPatella_L/R.
+      present = countTrueExcluding(data.foot_zones as Dict, /^fPatella_[LR]$/);
+    } else {
+      present = countTrue(data[field] as Dict);
+    }
     zonasPresentes += present;
     if (present > 0) elementosPresentes += 1;
     completitudPorElemento[field] = Math.round((present / max) * 1000) / 10;

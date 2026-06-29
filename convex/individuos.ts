@@ -92,10 +92,18 @@ export const listar = query({
           .query("fichas")
           .withIndex("by_individuo", (q) => q.eq("individuoId", ind._id))
           .collect();
+        // Corrección metodológica (SDD §6): contador de revisiones pendientes
+        // a través de las fichas del individuo, para el badge en /individuos.
+        const revisionesPendientesCount = fichas.reduce(
+          (acc, f) =>
+            acc + (Array.isArray(f.revisionesPendientes) ? f.revisionesPendientes.length : 0),
+          0,
+        );
         return {
           ...ind,
           tieneZonacion: fichas.some((f) => f.tipo === "zonacion"),
           tieneEat: fichas.some((f) => f.tipo === "eat"),
+          revisionesPendientesCount,
         };
       }),
     );

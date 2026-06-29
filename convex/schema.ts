@@ -47,6 +47,28 @@ export default defineSchema({
     // análisis. EAT: { ipo, ich, eat, totalPresent }.
     // Zonación: { completitudGlobal, completitudPorElemento, mne, ffi, ... }.
     metricas: v.optional(v.any()),
+
+    // --- Corrección metodológica de Zonación (aditivo, idempotencia) ---
+    // Versión del schema de datos de la ficha. Idempotencia de la migración
+    // 2026-06-zonacion: ausente/undefined o < 2 = sin migrar; = 2 = migrada.
+    // Ronan setea = 2 al terminar de migrar cada ficha de zonación.
+    schemaVersion: v.optional(v.number()),
+
+    // Revisiones que Martina debe atender tras la corrección metodológica.
+    // Render en UI (Johan): badge en /individuos + banner por revisión en el
+    // detalle de la ficha. severidad "corregir" = rojo; "revisar" = ámbar.
+    revisionesPendientes: v.optional(
+      v.array(
+        v.object({
+          // Identificador estable de la revisión.
+          codigo: v.string(), // "SACRO_COLAPSO" | "FUSION_FUERA_DE_EPIFISIS" | "MANDIBULA_REVISAR_NOTA"
+          severidad: v.union(v.literal("corregir"), v.literal("revisar")),
+          titulo: v.string(),
+          instrucciones: v.string(), // texto claro para Martina, dentro de la ficha
+          campos: v.array(v.string()), // claves de `data` afectadas
+        }),
+      ),
+    ),
   })
     .index("by_individuo", ["individuoId"])
     .index("by_individuo_tipo", ["individuoId", "tipo"])

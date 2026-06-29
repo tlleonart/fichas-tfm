@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import RevisionesBanner, {
+  type RevisionPendiente,
+} from "@/components/RevisionesBanner";
 
 interface EATMetrics {
   ipo: number;
@@ -25,6 +28,7 @@ export default function IndividuoDetailPage() {
   const id = params.id as Id<"individuos">;
   const data = useQuery(api.individuos.obtener, { id });
   const eliminar = useMutation(api.individuos.eliminar);
+  const marcarRevisionResuelta = useMutation(api.fichas.marcarRevisionResuelta);
 
   if (data === undefined)
     return <div className="card p-10 text-center text-sm text-muted">Cargando…</div>;
@@ -43,6 +47,18 @@ export default function IndividuoDetailPage() {
   const eat = fichas.find((f) => f.tipo === "eat");
   const zm = zon?.metricas as ZonMetrics | undefined;
   const em = eat?.metricas as EATMetrics | undefined;
+
+  // Corrección metodológica (SDD §6): banners por revisión pendiente. Hoy solo
+  // las fichas de zonación reciben revisiones; cada banner ancla al editor.
+  const zonRevisiones = (zon?.revisionesPendientes ?? []) as RevisionPendiente[];
+  const zonFichaId = zon?._id;
+
+  async function handleMarcarRevision(codigo: string) {
+    if (!zonFichaId) return;
+    // Solo limpia el ítem de ese código; el query reactivo de Convex re-rendea
+    // y el banner desaparece. No toca data/metricas (mutation de Ronan).
+    await marcarRevisionResuelta({ fichaId: zonFichaId, codigo });
+  }
 
   async function handleDelete() {
     if (!confirm("¿Eliminar este individuo y todas sus fichas? No se puede deshacer.")) return;
@@ -86,6 +102,13 @@ export default function IndividuoDetailPage() {
         </div>
       </header>
 
+      {/* Revisiones pendientes (corrección metodológica) */}
+      <RevisionesBanner
+        revisiones={zonRevisiones}
+        fichaHref={`/individuos/${id}/zonacion`}
+        onMarcarRevisada={zonFichaId ? handleMarcarRevision : undefined}
+      />
+
       {/* Ficha slots */}
       <section className="grid gap-5 md:grid-cols-2">
         <FichaCard
@@ -97,7 +120,7 @@ export default function IndividuoDetailPage() {
           {zm && (
             <div className="grid grid-cols-2 gap-3">
               <Stat label="Completitud global" value={`${zm.completitudGlobal}%`} />
-              <Stat label="Elementos presentes" value={`${zm.elementosPresentes}/17`} />
+              <Stat label="Elementos presentes" value={`${zm.elementosPresentes}/18`} />
               <Stat label="FFI (frescas/secas)" value={`${zm.ffi.frescas}/${zm.ffi.secas}`} />
               <Stat label="Alteraciones" value={String(zm.alteracionesCount)} />
             </div>

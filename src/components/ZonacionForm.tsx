@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import {
+  EPIPHYSEAL_ZONES,
+  buildMandibulaLateralidadObs,
+} from "@convex/lib/zonacionMigration";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -45,6 +49,7 @@ const SECTION_KEYS = [
   "femur",
   "tibia",
   "fibula",
+  "patella",
   "hand",
   "foot",
   "fragments",
@@ -71,6 +76,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   femur: "Fémur (11 zonas, L/R)",
   tibia: "Tibia (10 zonas, L/R)",
   fibula: "Peroné (6 zonas, L/R)",
+  patella: "Rótula (L/R)",
   hand: "Mano",
   foot: "Pie",
   fragments: "Fragmentos no identificables",
@@ -112,6 +118,15 @@ const VERTEBRA_ZONES: Record<number, string> = {
   3: "Transv. izq",
   4: "Espinosa",
 };
+
+/* Sacro — 4 zonas K&O (Fig 2d). Reemplaza los 5 segmentos × 4 = 20 previos.
+ * Claves canónicas que el backend computa: sac_z1..4 (ver lib/metrics.ts). */
+const SACRUM_ZONES: { key: string; label: string }[] = [
+  { key: "sac_z1", label: "Cuerpo" },
+  { key: "sac_z2", label: "Ala derecha" },
+  { key: "sac_z3", label: "Ala izquierda" },
+  { key: "sac_z4", label: "Cresta / espinosa" },
+];
 
 const STERNUM_ZONES: Record<number, string> = {
   1: "Manubrio",
@@ -312,16 +327,37 @@ function CompletionBadge({ present, total }: { present: number; total: number })
 /* ------------------------------------------------------------------ */
 
 export default function ZonacionForm({ initialData, registrador: registradorProp, fechaRegistro: fechaRegistroProp, onSave, saving }: ZonacionFormProps) {
+  /* Deep-link desde el banner de revisiones: si la URL trae #sec-<section>,
+   * esa sección arranca abierta (además de "context"). */
+  const hashSection = useMemo<SectionKey | null>(() => {
+    if (typeof window === "undefined") return null;
+    const m = window.location.hash.match(/^#sec-([a-zA-Z]+)$/);
+    if (!m) return null;
+    const key = m[1] as SectionKey;
+    return SECTION_KEYS.includes(key) ? key : null;
+  }, []);
+
   /* ---------- section toggle state ---------- */
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>(() => {
     const init: Record<string, boolean> = {};
-    for (const k of SECTION_KEYS) init[k] = k === "context";
+    for (const k of SECTION_KEYS) init[k] = k === "context" || k === hashSection;
     return init as Record<SectionKey, boolean>;
   });
 
   const toggle = useCallback((key: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  /* Tras montar con un deep-link, traemos la sección abierta a la vista. */
+  useEffect(() => {
+    if (!hashSection) return;
+    const t = setTimeout(() => {
+      document
+        .getElementById(`sec-${hashSection}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [hashSection]);
 
   /* ---------- context fields ---------- */
   const [registrador, setRegistrador] = useState(registradorProp ?? "");
@@ -423,6 +459,21 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     () => initialData?.fibula_fusion ?? {}
   );
 
+  /* ---------- patella (own element, K&O Z4 correction) ---------- */
+  const [patellaZones, setPatellaZones] = useState<Record<string, boolean>>(
+    () => {
+      const prev = (initialData?.patella_zones ?? {}) as Record<string, boolean>;
+      // Backward-compat: if a pre-migration ficha still carries fPatella_* in
+      // foot_zones and no patella_zones yet, seed from foot so the form shows
+      // what was recorded. (Read-only seed; foot_zones is left untouched.)
+      const foot = (initialData?.foot_zones ?? {}) as Record<string, boolean>;
+      return {
+        pat_L: Boolean(prev.pat_L) || Boolean(foot.fPatella_L),
+        pat_R: Boolean(prev.pat_R) || Boolean(foot.fPatella_R),
+      };
+    }
+  );
+
   /* ---------- hand ---------- */
   const [handZones, setHandZones] = useState<Record<string, boolean>>(
     () => initialData?.hand_zones ?? {}
@@ -465,8 +516,14 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
   }, [craniumZones]);
 
   const mandibleStats = useMemo(() => {
-    const n = countChecked(mandibleZones);
-    return { present: n, total: 14, pct: pct(n, 14) };
+    // Completitud sobre 7 zonas-tipo K&O: una zona cuenta si está de cualquier
+    // lado (L o R). El lado se registra como observación de lateralidad, no en
+    // el denominador (SDD §Z3 — coincide con computeZonacion `mand_z[1-7]`).
+    let n = 0;
+    for (const k of [1, 2, 3, 4, 5, 6, 7]) {
+      if (mandibleZones[`mand_${k}_L`] || mandibleZones[`mand_${k}_R`]) n += 1;
+    }
+    return { present: n, total: 7, pct: pct(n, 7) };
   }, [mandibleZones]);
 
   const vertebraeStats = useMemo(() => {
@@ -476,8 +533,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
   }, [vertebraeZones]);
 
   const sacrumStats = useMemo(() => {
-    const n = countChecked(sacrumZones);
-    return { present: n, total: 20, pct: pct(n, 20) };
+    // 4 zonas-tipo K&O (sac_z1..4). El cómputo del backend cuenta sólo sac_z*.
+    const n = SACRUM_ZONES.filter(({ key }) => sacrumZones[key]).length;
+    return { present: n, total: 4, pct: pct(n, 4) };
   }, [sacrumZones]);
 
   const sternumStats = useMemo(() => {
@@ -535,6 +593,11 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     return { present: n, total: 12, pct: pct(n, 12) };
   }, [fibulaZones]);
 
+  const patellaStats = useMemo(() => {
+    const n = countChecked(patellaZones);
+    return { present: n, total: 2, pct: pct(n, 2) };
+  }, [patellaZones]);
+
   /* ---------------------------------------------------------------- */
   /*  Generic checkbox toggler factories                               */
   /* ---------------------------------------------------------------- */
@@ -561,6 +624,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
   const toggleFemur = makeToggle(setFemurZones);
   const toggleTibia = makeToggle(setTibiaZones);
   const toggleFibula = makeToggle(setFibulaZones);
+  const togglePatella = makeToggle(setPatellaZones);
   const toggleHand = makeToggle(setHandZones);
   const toggleFoot = makeToggle(setFootZones);
   const toggleTaph = makeToggle(setTaphonomy);
@@ -570,6 +634,16 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
   /* ---------------------------------------------------------------- */
 
   const handleSubmit = useCallback(async () => {
+    // Mandíbula: el form captura presencia por lado (mand_{k}_L/R). Derivamos
+    // las 7 zonas-tipo canónicas mand_z{k} = OR(L,R) que el backend computa, y
+    // la observación de lateralidad legible con el helper canónico de Ronan.
+    const mandibleOut: Record<string, boolean> = { ...mandibleZones };
+    for (const k of [1, 2, 3, 4, 5, 6, 7]) {
+      mandibleOut[`mand_z${k}`] =
+        Boolean(mandibleZones[`mand_${k}_L`]) || Boolean(mandibleZones[`mand_${k}_R`]);
+    }
+    const mandibulaLateralidadObs = buildMandibulaLateralidadObs(mandibleZones);
+
     await onSave({
       registrador,
       fechaRegistro,
@@ -578,7 +652,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         nivel_capa: nivelCapa,
         cranium_zones: craniumZones,
         cranium_obs: craniumObs,
-        mandible_zones: mandibleZones,
+        mandible_zones: mandibleOut,
+        mandibula_lateralidad_obs: mandibulaLateralidadObs,
         vertebrae_zones: vertebraeZones,
         sacrum_zones: sacrumZones,
         sternum_zones: sternumZones,
@@ -598,6 +673,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         tibia_fusion: tibiaFusion,
         fibula_zones: fibulaZones,
         fibula_fusion: fibulaFusion,
+        patella_zones: patellaZones,
         hand_zones: handZones,
         foot_zones: footZones,
         fragments,
@@ -615,7 +691,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     scapulaZones, humerusZones, humerusFusion, radiusZones,
     radiusFusion, ulnaZones, ulnaFusion, osCoxaeZones,
     femurZones, femurFusion, tibiaZones, tibiaFusion,
-    fibulaZones, fibulaFusion, handZones, footZones,
+    fibulaZones, fibulaFusion, patellaZones, handZones, footZones,
     fragments, ffiRows, taphonomy, weatheringDegree, taphonomyObs,
   ]);
 
@@ -706,9 +782,38 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               const kR = `${prefix}_${z}_R`;
               const fL = `${prefix}_${z}_fusL`;
               const fR = `${prefix}_${z}_fusR`;
+              // Fusión SOLO en zonas epifisarias (SDD §Z1, tabla EPIPHYSEAL_ZONES).
+              // En diáfisis no se registra fusión → mostramos un guion atenuado.
+              const isEpiphysis = (EPIPHYSEAL_ZONES[prefix] ?? []).includes(String(z));
+              const fusionCell = (fKey: string) =>
+                isEpiphysis ? (
+                  <select
+                    value={fusionState[fKey] ?? ""}
+                    onChange={(e) =>
+                      fusionSetter((p) => ({ ...p, [fKey]: e.target.value }))
+                    }
+                    className="text-xs border border-line-strong rounded px-1 py-0.5"
+                  >
+                    <option value="">--</option>
+                    <option value="F">Fusionado</option>
+                    <option value="PUF">PUF</option>
+                    <option value="DUF">DUF</option>
+                  </select>
+                ) : (
+                  <span className="text-faint" title="Diáfisis — no se registra fusión">
+                    —
+                  </span>
+                );
               return (
                 <tr key={String(z)} className="hover:bg-surface-2">
-                  <td className="border border-line-strong px-2 py-1">Z{z}</td>
+                  <td className="border border-line-strong px-2 py-1">
+                    Z{z}
+                    {!isEpiphysis && (
+                      <span className="ml-1 text-faint" title="Diáfisis">
+                        (diáfisis)
+                      </span>
+                    )}
+                  </td>
                   <td className="border border-line-strong px-2 py-1 text-center">
                     <input
                       type="checkbox"
@@ -726,32 +831,10 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                     />
                   </td>
                   <td className="border border-line-strong px-2 py-1 text-center">
-                    <select
-                      value={fusionState[fL] ?? ""}
-                      onChange={(e) =>
-                        fusionSetter((p) => ({ ...p, [fL]: e.target.value }))
-                      }
-                      className="text-xs border border-line-strong rounded px-1 py-0.5"
-                    >
-                      <option value="">--</option>
-                      <option value="F">Fusionado</option>
-                      <option value="PUF">PUF</option>
-                      <option value="DUF">DUF</option>
-                    </select>
+                    {fusionCell(fL)}
                   </td>
                   <td className="border border-line-strong px-2 py-1 text-center">
-                    <select
-                      value={fusionState[fR] ?? ""}
-                      onChange={(e) =>
-                        fusionSetter((p) => ({ ...p, [fR]: e.target.value }))
-                      }
-                      className="text-xs border border-line-strong rounded px-1 py-0.5"
-                    >
-                      <option value="">--</option>
-                      <option value="F">Fusionado</option>
-                      <option value="PUF">PUF</option>
-                      <option value="DUF">DUF</option>
-                    </select>
+                    {fusionCell(fR)}
                   </td>
                 </tr>
               );
@@ -888,15 +971,21 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 3. Mandible ====== */}
-      <div>
+      <div id="sec-mandible" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.mandible}
           isOpen={openSections.mandible}
           onToggle={() => toggle("mandible")}
-          badge={`${mandibleStats.present}/14 (${mandibleStats.pct}%)`}
+          badge={`${mandibleStats.present}/7 (${mandibleStats.pct}%)`}
         />
         {openSections.mandible && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface">
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <p className="text-xs text-faint">
+              Completitud sobre <strong>7 zonas-tipo</strong> (Knüsel &amp; Outram): una
+              zona cuenta como presente si está de cualquier lado. Marcá el lado (izq/der)
+              para registrar la lateralidad — se guarda como observación, no en el
+              denominador.
+            </p>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
@@ -937,7 +1026,16 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                 </tbody>
               </table>
             </div>
-            <CompletionBadge present={mandibleStats.present} total={14} />
+            <CompletionBadge present={mandibleStats.present} total={7} />
+            {(() => {
+              const obs = buildMandibulaLateralidadObs(mandibleZones);
+              return obs ? (
+                <p className="text-xs text-muted">
+                  <span className="font-medium">Observación de lateralidad (derivada):</span>{" "}
+                  {obs}
+                </p>
+              ) : null;
+            })()}
           </div>
         )}
       </div>
@@ -964,53 +1062,38 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 5. Sacrum ====== */}
-      <div>
+      <div id="sec-sacrum" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.sacrum}
           isOpen={openSections.sacrum}
           onToggle={() => toggle("sacrum")}
-          badge={`${sacrumStats.present}/20 (${sacrumStats.pct}%)`}
+          badge={`${sacrumStats.present}/4 (${sacrumStats.pct}%)`}
         />
         {openSections.sacrum && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface">
-            <div className="overflow-x-auto">
-              <table className="text-xs border-collapse w-full">
-                <thead>
-                  <tr className="bg-surface-2">
-                    <th className="border border-line-strong px-2 py-1 text-left">Segmento</th>
-                    {Object.entries(VERTEBRA_ZONES).map(([z, lbl]) => (
-                      <th key={z} className="border border-line-strong px-2 py-1 text-center">
-                        {z}-{lbl}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {range(1, 5).map((i) => (
-                    <tr key={i} className="hover:bg-surface-2">
-                      <td className="border border-line-strong px-2 py-1 font-medium">S{i}</td>
-                      {range(1, 4).map((z) => {
-                        const key = `S${i}_z${z}`;
-                        return (
-                          <td
-                            key={z}
-                            className="border border-line-strong px-2 py-1 text-center"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!sacrumZones[key]}
-                              onChange={() => toggleSacrum(key)}
-                              className="accent-accent"
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <p className="text-xs text-faint">
+              4 zonas-tipo de Knüsel &amp; Outram (Fig. 2d). Reemplaza el esquema previo
+              de 5 segmentos × 4 zonas.
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {SACRUM_ZONES.map(({ key, label }, i) => (
+                <label
+                  key={key}
+                  className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!sacrumZones[key]}
+                    onChange={() => toggleSacrum(key)}
+                    className="accent-accent"
+                  />
+                  <span>
+                    {i + 1} - {label}
+                  </span>
+                </label>
+              ))}
             </div>
-            <CompletionBadge present={sacrumStats.present} total={20} />
+            <CompletionBadge present={sacrumStats.present} total={4} />
           </div>
         )}
       </div>
@@ -1169,7 +1252,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 10. Humerus ====== */}
-      <div>
+      <div id="sec-humerus" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.humerus}
           isOpen={openSections.humerus}
@@ -1192,7 +1275,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 11. Radius ====== */}
-      <div>
+      <div id="sec-radius" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.radius}
           isOpen={openSections.radius}
@@ -1216,7 +1299,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 12. Ulna ====== */}
-      <div>
+      <div id="sec-ulna" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.ulna}
           isOpen={openSections.ulna}
@@ -1256,7 +1339,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 14. Femur ====== */}
-      <div>
+      <div id="sec-femur" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.femur}
           isOpen={openSections.femur}
@@ -1279,7 +1362,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 15. Tibia ====== */}
-      <div>
+      <div id="sec-tibia" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.tibia}
           isOpen={openSections.tibia}
@@ -1302,7 +1385,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       </div>
 
       {/* ====== 16. Fibula ====== */}
-      <div>
+      <div id="sec-fibula" className="scroll-mt-4">
         <SectionHeader
           label={SECTION_LABELS.fibula}
           isOpen={openSections.fibula}
@@ -1320,6 +1403,44 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               setFibulaFusion
             )}
             <CompletionBadge present={fibulaStats.present} total={12} />
+          </div>
+        )}
+      </div>
+
+      {/* ====== 16b. Patella (own element — K&O Z4 correction) ====== */}
+      <div id="sec-patella" className="scroll-mt-4">
+        <SectionHeader
+          label={SECTION_LABELS.patella}
+          isOpen={openSections.patella}
+          onToggle={() => toggle("patella")}
+          badge={`${patellaStats.present}/2 (${patellaStats.pct}%)`}
+        />
+        {openSections.patella && (
+          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <p className="text-xs text-faint">
+              La rótula es un elemento propio (sale de “Pie”). Presencia por lado.
+            </p>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!patellaZones["pat_L"]}
+                  onChange={() => togglePatella("pat_L")}
+                  className="accent-accent"
+                />
+                <span>Izquierda</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!patellaZones["pat_R"]}
+                  onChange={() => togglePatella("pat_R")}
+                  className="accent-accent"
+                />
+                <span>Derecha</span>
+              </label>
+            </div>
+            <CompletionBadge present={patellaStats.present} total={2} />
           </div>
         )}
       </div>
@@ -1523,28 +1644,10 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               </table>
             </div>
 
-            {/* Patella */}
-            <h4 className="text-sm font-semibold text-muted">Rótula - presencia L/R</h4>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 text-xs cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!footZones["fPatella_L"]}
-                  onChange={() => toggleFoot("fPatella_L")}
-                  className="accent-accent"
-                />
-                <span>Izquierda</span>
-              </label>
-              <label className="flex items-center gap-2 text-xs cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!footZones["fPatella_R"]}
-                  onChange={() => toggleFoot("fPatella_R")}
-                  className="accent-accent"
-                />
-                <span>Derecha</span>
-              </label>
-            </div>
+            <p className="text-xs text-faint">
+              La rótula dejó de registrarse acá: es ahora un elemento propio (sección
+              “Rótula”).
+            </p>
           </div>
         )}
       </div>

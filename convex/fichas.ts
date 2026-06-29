@@ -49,6 +49,25 @@ export const actualizar = mutation({
   },
 });
 
+/**
+ * Marca una revisión pendiente como resuelta: remueve el ítem cuyo `codigo`
+ * coincida de `revisionesPendientes` (botón "Marcar como revisada", SDD §6).
+ * Idempotente (si el código no está, no-op). NO toca `data`, `metricas` ni
+ * `schemaVersion` — solo la lista de revisiones.
+ */
+export const marcarRevisionResuelta = mutation({
+  args: { fichaId: v.id("fichas"), codigo: v.string() },
+  handler: async (ctx, { fichaId, codigo }) => {
+    const ficha = await ctx.db.get(fichaId);
+    if (!ficha) throw new Error("Ficha no encontrada");
+    const restantes = (ficha.revisionesPendientes ?? []).filter(
+      (r) => r.codigo !== codigo,
+    );
+    await ctx.db.patch(fichaId, { revisionesPendientes: restantes });
+    return { restantes: restantes.length };
+  },
+});
+
 export const eliminar = mutation({
   args: { id: v.id("fichas") },
   handler: async (ctx, { id }) => {

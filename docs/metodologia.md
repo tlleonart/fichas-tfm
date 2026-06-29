@@ -25,26 +25,57 @@ se divide en **zonas anatómicas estandarizadas**; se registra la presencia de c
 lado (Izq/Der). Es la base para cuantificar fragmentación y representación.
 
 ### 2.1 Zonas por elemento (máximos)
+
+> **Nota metodológica.** Los máximos por elemento son la **operacionalización** del sistema
+> de Knüsel & Outram (2004) en este software, **no cifras canónicas** del paper (K&O define el
+> esquema de zonas por hueso, pero no publica un "total" único). El total que usa el sistema
+> como denominador de completitud es una decisión de implementación, sujeta a revisión a
+> medida que se afina la fidelidad al método.
+
 | Elemento | Zonas | Elemento | Zonas |
 |----------|------:|----------|------:|
 | Cráneo | 15 | Cúbito | 18 |
-| Mandíbula | 14 | Coxal | 24 |
+| Mandíbula | 7 | Coxal | 24 |
 | Vértebras (C/T/L) | 96 | Fémur | 22 |
-| Sacro | 20 | Tibia | 20 |
+| Sacro | 4 | Tibia | 20 |
 | Esternón | 3 | Peroné | 12 |
 | Clavícula | 6 | Mano | 130 |
-| Costillas | 72 | Pie | 144 |
-| Escápula | 18 | **Total** | **658** |
-| Húmero | 22 | | |
+| Costillas | 72 | Pie | 142 |
+| Escápula | 18 | Rótula | 2 |
+| Húmero | 22 | **Total** | **635** |
 | Radio | 22 | | |
 
+**Corrección metodológica 2026-06** (alineación con K&O contra una implementación previa de
+658 zonas):
+- **Sacro: 20 → 4 zonas.** K&O (Fig. 2d) define el sacro con **4 zonas-tipo** (cuerpo, ala
+  derecha, ala izquierda, cresta/espinosa), no como 5 segmentos × 4. Las claves del sistema
+  pasan de `S{1..5}_z{1..4}` a `sac_z{1..4}`.
+- **Mandíbula: 14 → 7 zonas.** La completitud cuenta las **7 zonas-tipo** K&O; el lado
+  (izq/der) se registra como **observación de lateralidad asociada**, no en el denominador
+  (K&O p.87: el lado del que deriva el fragmento se anota como atributo, no duplica el conteo
+  de zonas). Las claves pasan de `mand_{1..7}_{L|R}` a `mand_z{1..7}` (OR de ambos lados) +
+  `mandibula_lateralidad_obs`.
+- **Rótula: elemento propio.** Sale de "pie" (`fPatella_L/R` dentro de `foot_zones`) a
+  elemento independiente `patella_zones` (`pat_L`, `pat_R`). Pie pasa de 144 a 142; rótula
+  aporta 2. Neto sobre el total: 0.
+- **Fusión solo en epífisis.** El estado de fusión (F/PUF/DUF) se registra únicamente en las
+  zonas **epifisarias** de cada hueso largo; la fusión no entra en el cómputo de completitud.
+
+> **Futuro — mandíbula a 13 zonas (propuesta a mediano plazo).** El esquema correcto para
+> capturar lateralidad **sin perder información ni duplicar la sínfisis** sería **13 zonas**:
+> 6 zonas bilaterales × 2 lados (12) + 1 zona de línea media única (sínfisis). El esquema de
+> 14 zonas previo contaba la sínfisis dos veces (`mand_7_L` y `mand_7_R` para una estructura
+> medial única). Por ahora se adopta la Opción A (7 zonas-tipo + observación de lateralidad)
+> por comparabilidad del denominador; la propuesta de 13 queda documentada para una iteración
+> posterior. (Ver también `sources/VALIDACION-METODOLOGICA.md`.)
+
 ### 2.2 Métricas derivadas
-- **Completitud global** = zonas presentes / 658 × 100. Las falanges de mano y pie se
+- **Completitud global** = zonas presentes / 635 × 100. Las falanges de mano y pie se
   registran **por dedo** (I–V × posición × 3 zonas × lado); el dedo I no tiene falange medial,
   por lo que hay 14 falanges por lado (5 proximales + 4 mediales + 5 distales).
 - **Completitud por elemento** = zonas presentes / máximo del elemento × 100
   (porcentaje de completitud, *sensu* Morlan 1994).
-- **Elementos presentes** = elementos con ≥ 1 zona (de 17).
+- **Elementos presentes** = elementos con ≥ 1 zona (de 18, con la rótula como elemento propio).
 - **FFI (Fracture Freshness Index, Outram)** — por fragmento de diáfisis: contorno + ángulo
   + textura, **0–2 cada uno → 0–6**. **0–2 = fractura fresca (perimortem); ≥ 3 = hueso seco
   (postmortem).** Se resume como {n, media, frescas, secas}.
@@ -52,7 +83,9 @@ lado (Izq/Der). Es la base para cuantificar fragmentación y representación.
   óxido de hierro, corte, fuego, abrasión, concreciones, descamación.
 - **Fragmentos no identificables** — por tipo (axial/apendicular/indeterminado) y clase de
   tamaño.
-- **Estado de fusión** (PUF/DUF) en huesos largos → información de edad.
+- **Estado de fusión** (F/PUF/DUF) en huesos largos → información de edad. Se registra
+  **solo en las zonas epifisarias** de cada hueso (la fusión ocurre en las epífisis, no en la
+  diáfisis) y **no entra en el cómputo de completitud**.
 
 > A nivel de **conjunto** (varios individuos) la Zonación habilita MNE, MNI y NISP. En este
 > sistema esas agregaciones se ubican en la capa de análisis (ver §4 y `escalado.md`).

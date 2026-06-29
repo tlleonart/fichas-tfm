@@ -12,6 +12,8 @@ import type * as analisis from "../analisis.js";
 import type * as fichas from "../fichas.js";
 import type * as individuos from "../individuos.js";
 import type * as lib_metrics from "../lib/metrics.js";
+import type * as lib_zonacionMigration from "../lib/zonacionMigration.js";
+import type * as migrations_zonacion_2026_06 from "../migrations/zonacion_2026_06.js";
 
 import type {
   ApiFromModules,
@@ -24,6 +26,8 @@ declare const fullApi: ApiFromModules<{
   fichas: typeof fichas;
   individuos: typeof individuos;
   "lib/metrics": typeof lib_metrics;
+  "lib/zonacionMigration": typeof lib_zonacionMigration;
+  "migrations/zonacion_2026_06": typeof migrations_zonacion_2026_06;
 }>;
 
 /**

@@ -49,12 +49,74 @@ function severityClasses(sev: RevisionPendiente["severidad"]) {
   };
 }
 
+/** Banner individual de una revisión, con su propio botón "Marcar como revisada". */
+function RevisionBannerItem({
+  revision,
+  fichaHref,
+  onMarcarRevisada,
+}: {
+  revision: RevisionPendiente;
+  fichaHref?: string;
+  onMarcarRevisada?: (codigo: string) => void | Promise<void>;
+}) {
+  const [working, setWorking] = useState(false);
+  const sc = severityClasses(revision.severidad);
+  const anchor = revision.campos.map((c) => CAMPO_TO_ANCHOR[c]).find(Boolean);
+  const target = fichaHref && anchor ? `${fichaHref}#${anchor}` : fichaHref;
+
+  async function handleMarcar() {
+    if (!onMarcarRevisada) return;
+    setWorking(true);
+    try {
+      // Convex re-rendea el query al resolver → este ítem desaparece solo.
+      await onMarcarRevisada(revision.codigo);
+    } finally {
+      // Si falla, rehabilitamos el botón; si tuvo éxito, el componente
+      // probablemente ya se desmontó por reactividad del query.
+      setWorking(false);
+    }
+  }
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 ${sc.box}`} role="alert">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={`pill ${sc.tag}`} style={{ borderColor: "transparent" }}>
+          {sc.tagLabel}
+        </span>
+        <h3 className="text-sm font-semibold text-ink">{revision.titulo}</h3>
+      </div>
+      <p className="mt-1.5 text-sm text-muted">{revision.instrucciones}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-4">
+        {target && (
+          <Link
+            href={target}
+            className="text-sm font-medium text-accent hover:underline"
+          >
+            Ir a la sección →
+          </Link>
+        )}
+        {onMarcarRevisada && (
+          <button
+            type="button"
+            onClick={handleMarcar}
+            disabled={working}
+            className="btn btn-ghost text-sm disabled:opacity-50"
+          >
+            {working ? "Marcando…" : "Marcar como revisada"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Banner por cada revisión pendiente de una ficha. Render condicional: si no
  * hay revisiones devuelve null.
  *
  * @param fichaHref  link al editor de la ficha (Zonación) para anclar a la sección.
- * @param onMarcarRevisada  callback opcional para "Marcar como revisada".
+ * @param onMarcarRevisada  callback por ítem (recibe el `codigo`) para resolver
+ *   la revisión. Si se omite, el botón no se muestra.
  */
 export default function RevisionesBanner({
   revisiones,
@@ -63,68 +125,20 @@ export default function RevisionesBanner({
 }: {
   revisiones: RevisionPendiente[] | undefined | null;
   fichaHref?: string;
-  onMarcarRevisada?: () => void | Promise<void>;
+  onMarcarRevisada?: (codigo: string) => void | Promise<void>;
 }) {
-  const [working, setWorking] = useState(false);
-
   if (!revisiones || revisiones.length === 0) return null;
-
-  async function handleMarcar() {
-    if (!onMarcarRevisada) return;
-    setWorking(true);
-    try {
-      await onMarcarRevisada();
-    } finally {
-      setWorking(false);
-    }
-  }
 
   return (
     <section className="space-y-3" aria-label="Revisiones pendientes">
-      {revisiones.map((r, i) => {
-        const sc = severityClasses(r.severidad);
-        const anchor = r.campos
-          .map((c) => CAMPO_TO_ANCHOR[c])
-          .find(Boolean);
-        const target =
-          fichaHref && anchor ? `${fichaHref}#${anchor}` : fichaHref;
-        return (
-          <div
-            key={`${r.codigo}-${i}`}
-            className={`rounded-lg border px-4 py-3 ${sc.box}`}
-            role="alert"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`pill ${sc.tag}`}
-                style={{ borderColor: "transparent" }}
-              >
-                {sc.tagLabel}
-              </span>
-              <h3 className="text-sm font-semibold text-ink">{r.titulo}</h3>
-            </div>
-            <p className="mt-1.5 text-sm text-muted">{r.instrucciones}</p>
-            {target && (
-              <Link
-                href={target}
-                className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
-              >
-                Ir a la sección →
-              </Link>
-            )}
-          </div>
-        );
-      })}
-      {onMarcarRevisada && (
-        <button
-          type="button"
-          onClick={handleMarcar}
-          disabled={working}
-          className="btn btn-ghost text-sm disabled:opacity-50"
-        >
-          {working ? "Marcando…" : "Marcar como revisada"}
-        </button>
-      )}
+      {revisiones.map((r, i) => (
+        <RevisionBannerItem
+          key={`${r.codigo}-${i}`}
+          revision={r}
+          fichaHref={fichaHref}
+          onMarcarRevisada={onMarcarRevisada}
+        />
+      ))}
     </section>
   );
 }

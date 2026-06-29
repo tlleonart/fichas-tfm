@@ -28,6 +28,7 @@ export default function IndividuoDetailPage() {
   const id = params.id as Id<"individuos">;
   const data = useQuery(api.individuos.obtener, { id });
   const eliminar = useMutation(api.individuos.eliminar);
+  const marcarRevisionResuelta = useMutation(api.fichas.marcarRevisionResuelta);
 
   if (data === undefined)
     return <div className="card p-10 text-center text-sm text-muted">Cargando…</div>;
@@ -50,6 +51,14 @@ export default function IndividuoDetailPage() {
   // Corrección metodológica (SDD §6): banners por revisión pendiente. Hoy solo
   // las fichas de zonación reciben revisiones; cada banner ancla al editor.
   const zonRevisiones = (zon?.revisionesPendientes ?? []) as RevisionPendiente[];
+  const zonFichaId = zon?._id;
+
+  async function handleMarcarRevision(codigo: string) {
+    if (!zonFichaId) return;
+    // Solo limpia el ítem de ese código; el query reactivo de Convex re-rendea
+    // y el banner desaparece. No toca data/metricas (mutation de Ronan).
+    await marcarRevisionResuelta({ fichaId: zonFichaId, codigo });
+  }
 
   async function handleDelete() {
     if (!confirm("¿Eliminar este individuo y todas sus fichas? No se puede deshacer.")) return;
@@ -97,6 +106,7 @@ export default function IndividuoDetailPage() {
       <RevisionesBanner
         revisiones={zonRevisiones}
         fichaHref={`/individuos/${id}/zonacion`}
+        onMarcarRevisada={zonFichaId ? handleMarcarRevision : undefined}
       />
 
       {/* Ficha slots */}

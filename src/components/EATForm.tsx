@@ -191,31 +191,71 @@ function CheckboxGrid({
 }) {
   const gridCols =
     columns === 6
-      ? "grid-cols-3 sm:grid-cols-6"
+      ? "grid-cols-3 sm:grid-cols-4 md:grid-cols-6"
       : columns === 4
-        ? "grid-cols-2 sm:grid-cols-4"
+        ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
         : columns === 3
-          ? "grid-cols-2 sm:grid-cols-3"
-          : "grid-cols-2 sm:grid-cols-4";
+          ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-3"
+          : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
 
   return (
     <div className={`grid ${gridCols} gap-1`}>
       {items.map((item) => (
         <label
           key={item}
-          className="flex items-center gap-1.5 text-sm cursor-pointer hover:bg-surface-2 rounded px-1 py-0.5"
+          className="tap-label flex items-center gap-2 text-sm cursor-pointer hover:bg-surface-2 rounded px-1 py-0.5"
         >
           <input
             type="checkbox"
             checked={!!checked[asciiKey(item)]}
             onChange={(e) => onChange(asciiKey(item), e.target.checked)}
-            className="accent-accent w-4 h-4"
+            className="tap-check"
           />
           <span className="truncate">{item}</span>
         </label>
       ))}
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Bulk-fill controls (F1)                                            */
+/* ------------------------------------------------------------------ */
+
+function BulkControls({
+  onAll,
+  onClear,
+  label,
+}: {
+  onAll: () => void;
+  onClear: () => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <button
+        type="button"
+        onClick={onAll}
+        className="bulk-btn"
+        aria-label={`Marcar todo — ${label}`}
+      >
+        Marcar todo
+      </button>
+      <button
+        type="button"
+        onClick={onClear}
+        className="bulk-btn"
+        aria-label={`Limpiar — ${label}`}
+      >
+        Limpiar
+      </button>
+    </div>
+  );
+}
+
+/** Build a fully-checked state object for a list of display labels. */
+function allTrue(items: readonly string[]): Record<string, boolean> {
+  return Object.fromEntries(items.map((i) => [asciiKey(i), true]));
 }
 
 /* ------------------------------------------------------------------ */
@@ -566,7 +606,7 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
       {/*  1. Context Data                                              */}
       {/* ============================================================ */}
       <Section title="1. Datos de Contexto">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {textInput("Registrador", registrador, setRegistrador)}
           {textInput("Fecha de registro", fechaRegistro, setFechaRegistro, { type: "date" })}
         </div>
@@ -581,6 +621,11 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
       >
         {/* Cráneo */}
         <Section title="Cráneo" subtitle={`${countChecked(craneoChecked)} / 18`} defaultOpen={false}>
+          <BulkControls
+            label="Cráneo"
+            onAll={() => setCraneoChecked(allTrue(CRANEO_BONES))}
+            onClear={() => setCraneoChecked({})}
+          />
           <CheckboxGrid
             items={CRANEO_BONES}
             checked={craneoChecked}
@@ -591,6 +636,11 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
 
         {/* Vértebras */}
         <Section title="Vértebras" subtitle={`${countChecked(vertebrasChecked)} / 32`} defaultOpen={false}>
+          <BulkControls
+            label="Vértebras"
+            onAll={() => setVertebrasChecked(allTrue(ALL_VERTEBRAS))}
+            onClear={() => setVertebrasChecked({})}
+          />
           <div className="space-y-3">
             <div>
               <p className="text-xs font-semibold text-faint mb-1">Cervicales (C1-C7)</p>
@@ -642,6 +692,11 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
 
         {/* Huesos Largos */}
         <Section title="Huesos Largos" subtitle={`${countChecked(largosChecked)} / 14`} defaultOpen={false}>
+          <BulkControls
+            label="Huesos Largos"
+            onAll={() => setLargosChecked(allTrue(largosAllKeys))}
+            onClear={() => setLargosChecked({})}
+          />
           <CheckboxGrid
             items={largosAllKeys}
             checked={largosChecked}
@@ -652,6 +707,11 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
 
         {/* Huesos Planos */}
         <Section title="Huesos Planos" subtitle={`${countChecked(planosChecked)} / 7`} defaultOpen={false}>
+          <BulkControls
+            label="Huesos Planos"
+            onAll={() => setPlanosChecked(allTrue(HUESOS_PLANOS))}
+            onClear={() => setPlanosChecked({})}
+          />
           <CheckboxGrid
             items={HUESOS_PLANOS}
             checked={planosChecked}
@@ -662,6 +722,11 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
 
         {/* Costillas */}
         <Section title="Costillas" subtitle={`${countChecked(costillasChecked)} / 24`} defaultOpen={false}>
+          <BulkControls
+            label="Costillas"
+            onAll={() => setCostillasChecked(allTrue(costillasAllKeys))}
+            onClear={() => setCostillasChecked({})}
+          />
           <CheckboxGrid
             items={costillasAllKeys}
             checked={costillasChecked}
@@ -671,25 +736,38 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
         </Section>
 
         {/* Mandíbula & Hioides */}
-        <div className="flex gap-6 flex-wrap">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={mandibula}
-              onChange={(e) => setMandibula(e.target.checked)}
-              className="accent-accent w-4 h-4"
-            />
-            <span className="font-medium">Mand&iacute;bula</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hioides}
-              onChange={(e) => setHioides(e.target.checked)}
-              className="accent-accent w-4 h-4"
-            />
-            <span className="font-medium">Hioides</span>
-          </label>
+        <div className="space-y-2">
+          <BulkControls
+            label="Mandíbula e hioides"
+            onAll={() => {
+              setMandibula(true);
+              setHioides(true);
+            }}
+            onClear={() => {
+              setMandibula(false);
+              setHioides(false);
+            }}
+          />
+          <div className="flex gap-6 flex-wrap">
+            <label className="tap-label flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mandibula}
+                onChange={(e) => setMandibula(e.target.checked)}
+                className="tap-check"
+              />
+              <span className="font-medium">Mand&iacute;bula</span>
+            </label>
+            <label className="tap-label flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hioides}
+                onChange={(e) => setHioides(e.target.checked)}
+                className="tap-check"
+              />
+              <span className="font-medium">Hioides</span>
+            </label>
+          </div>
         </div>
 
         {/* Manos */}

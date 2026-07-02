@@ -216,6 +216,69 @@ const PHALANX_POS_LABEL: Record<string, string> = {
   D: "Distal",
 };
 
+/* ------------------------------------------------------------------ */
+/*  Bulk-fill key generators (F1)                                      */
+/*  Each returns the full list of PRESENCE checkbox keys for a section */
+/*  (mirrors exactly what the section renders). Fusion selects,        */
+/*  observations and taphonomy are intentionally excluded.             */
+/* ------------------------------------------------------------------ */
+
+function bilatKeys(prefix: string, zones: (number | string)[]): string[] {
+  return zones.flatMap((z) => [`${prefix}_${z}_L`, `${prefix}_${z}_R`]);
+}
+
+function phalanxKeys(prefix: string): string[] {
+  return PHALANX_DIGITS.flatMap(({ d, pos }) =>
+    pos.flatMap((p) =>
+      (["L", "R"] as const).flatMap((side) =>
+        range(1, 3).map((z) => `${prefix}_d${d}_${p}_z${z}_${side}`),
+      ),
+    ),
+  );
+}
+
+const CRANIUM_KEYS = Object.keys(CRANIUM_ZONES).map((z) => `cran_${z}`);
+const MANDIBLE_KEYS = [1, 2, 3, 4, 5, 6, 7].flatMap((z) => [`mand_${z}_L`, `mand_${z}_R`]);
+const VERTEBRAE_KEYS = ([["C", 7], ["T", 12], ["L", 5]] as const).flatMap(([p, c]) =>
+  range(1, c).flatMap((i) => range(1, 4).map((z) => `${p}${i}_z${z}`)),
+);
+const SACRUM_KEYS = SACRUM_ZONES.map((z) => z.key);
+const STERNUM_KEYS = [1, 2, 3].map((z) => `stern_${z}`);
+const CLAVICLE_KEYS = bilatKeys("clav", range(1, 3));
+const RIB_KEYS = range(1, 12).flatMap((r) =>
+  range(1, 3).flatMap((z) => [`rib${r}_z${z}_L`, `rib${r}_z${z}_R`]),
+);
+const SCAPULA_KEYS = bilatKeys("scap", range(1, 9));
+const HUMERUS_KEYS = bilatKeys("hum", range(1, 11));
+const RADIUS_KEYS = bilatKeys("rad", [...range(1, 10), "J"]);
+const ULNA_KEYS = bilatKeys("uln", ["A", "B", "C", "D", "E", "F", "G", "H", "J"]);
+const OS_COXAE_KEYS = bilatKeys("cox", range(1, 12));
+const FEMUR_KEYS = bilatKeys("fem", range(1, 11));
+const TIBIA_KEYS = bilatKeys("tib", range(1, 10));
+const FIBULA_KEYS = bilatKeys("fib", range(1, 6));
+const PATELLA_KEYS = ["pat_L", "pat_R"];
+const HAND_KEYS = [
+  ...range(1, 5).flatMap((mc) =>
+    range(1, 3).flatMap((z) => [`hMC${mc}_z${z}_L`, `hMC${mc}_z${z}_R`]),
+  ),
+  ...phalanxKeys("hPh"),
+  ...HAND_CARPALS.flatMap((c) => [`hCarp_${c}_L`, `hCarp_${c}_R`]),
+];
+const FOOT_KEYS = [
+  ...range(1, 5).flatMap((mt) =>
+    range(1, 3).flatMap((z) => [`fMT${mt}_z${z}_L`, `fMT${mt}_z${z}_R`]),
+  ),
+  ...phalanxKeys("fPh"),
+  ...bilatKeys("fCalc", range(1, 5)),
+  ...bilatKeys("fTalus", range(1, 4)),
+  ...FOOT_TARSALS.flatMap((t) => [`fTars_${t}_L`, `fTars_${t}_R`]),
+];
+
+/** Build a fully-checked state object from a key list. */
+function fillKeys(keys: string[]): Record<string, boolean> {
+  return Object.fromEntries(keys.map((k) => [k, true]));
+}
+
 /**
  * Per-digit phalanx grid: each digit's phalanges (I–V × position) with the 3
  * standard zones (Z1 proximal articulation, Z2 distal condyle, Z3 diaphysis)
@@ -260,14 +323,11 @@ function renderPhalanges(
                   range(1, 3).map((z) => {
                     const key = `${prefix}_d${d}_${p}_z${z}_${side}`;
                     return (
-                      <td key={`${side}${z}`} className="border border-line-strong px-2 py-1 text-center">
-                        <input
-                          type="checkbox"
-                          checked={!!state[key]}
-                          onChange={() => toggler(key)}
-                          className="accent-accent"
-                        />
-                      </td>
+                      <CheckCell
+                        key={`${side}${z}`}
+                        checked={!!state[key]}
+                        onChange={() => toggler(key)}
+                      />
                     );
                   }),
                 )}
@@ -299,7 +359,7 @@ function SectionHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full flex items-center justify-between bg-surface-2 text-ink px-4 py-3 rounded-lg hover:bg-line-strong transition text-left"
+      className="w-full flex items-center justify-between bg-surface-2 text-ink px-4 py-3 rounded-lg hover:bg-line-strong transition text-left sticky top-14 z-20"
     >
       <span className="font-semibold text-sm">{label}</span>
       <span className="flex items-center gap-3">
@@ -318,6 +378,60 @@ function CompletionBadge({ present, total }: { present: number; total: number })
   return (
     <div className="text-xs text-faint mt-1">
       {present}/{total} zonas ({pct(present, total)}%)
+    </div>
+  );
+}
+
+/* Full-cell tappable checkbox for data tables (F2 — >=44px touch target). */
+function CheckCell({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <td className="border border-line-strong p-0 text-center">
+      <label className="tap-cell">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="tap-check"
+        />
+      </label>
+    </td>
+  );
+}
+
+/* "Marcar todo" / "Limpiar" controls for a section (F1). */
+function BulkControls({
+  onAll,
+  onClear,
+  label,
+}: {
+  onAll: () => void;
+  onClear: () => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onAll}
+        className="bulk-btn"
+        aria-label={`Marcar todo — ${label}`}
+      >
+        Marcar todo
+      </button>
+      <button
+        type="button"
+        onClick={onClear}
+        className="bulk-btn"
+        aria-label={`Limpiar — ${label}`}
+      >
+        Limpiar
+      </button>
     </div>
   );
 }
@@ -728,22 +842,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                   <td className="border border-line-strong px-2 py-1">
                     {zoneLabels ? `${z} - ${zoneLabels[z]}` : `Z${z}`}
                   </td>
-                  <td className="border border-line-strong px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={!!state[kL]}
-                      onChange={() => toggler(kL)}
-                      className="accent-accent"
-                    />
-                  </td>
-                  <td className="border border-line-strong px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={!!state[kR]}
-                      onChange={() => toggler(kR)}
-                      className="accent-accent"
-                    />
-                  </td>
+                  <CheckCell checked={!!state[kL]} onChange={() => toggler(kL)} />
+                  <CheckCell checked={!!state[kR]} onChange={() => toggler(kR)} />
                 </tr>
               );
             })}
@@ -814,22 +914,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                       </span>
                     )}
                   </td>
-                  <td className="border border-line-strong px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={!!state[kL]}
-                      onChange={() => toggler(kL)}
-                      className="accent-accent"
-                    />
-                  </td>
-                  <td className="border border-line-strong px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={!!state[kR]}
-                      onChange={() => toggler(kR)}
-                      className="accent-accent"
-                    />
-                  </td>
+                  <CheckCell checked={!!state[kL]} onChange={() => toggler(kL)} />
+                  <CheckCell checked={!!state[kR]} onChange={() => toggler(kR)} />
                   <td className="border border-line-strong px-2 py-1 text-center">
                     {fusionCell(fL)}
                   </td>
@@ -869,17 +955,11 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                 {range(1, 4).map((z) => {
                   const key = `${prefix}${i}_z${z}`;
                   return (
-                    <td
+                    <CheckCell
                       key={z}
-                      className="border border-line-strong px-2 py-1 text-center"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!vertebraeZones[key]}
-                        onChange={() => toggleVertebrae(key)}
-                        className="accent-accent"
-                      />
-                    </td>
+                      checked={!!vertebraeZones[key]}
+                      onChange={() => toggleVertebrae(key)}
+                    />
                   );
                 })}
               </tr>
@@ -904,7 +984,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
           onToggle={() => toggle("context")}
         />
         {openSections.context && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="border border-line rounded-b-lg p-4 bg-surface grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
               { label: "Registrador", value: registrador, setter: setRegistrador },
               { label: "Fecha de registro", value: fechaRegistro, setter: setFechaRegistro },
@@ -935,19 +1015,26 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.cranium && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.cranium}
+                onAll={() => setCraniumZones(fillKeys(CRANIUM_KEYS))}
+                onClear={() => setCraniumZones({})}
+              />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {Object.entries(CRANIUM_ZONES).map(([z, lbl]) => {
                 const key = `cran_${z}`;
                 return (
                   <label
                     key={z}
-                    className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
+                    className="tap-label flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={!!craniumZones[key]}
                       onChange={() => toggleCranium(key)}
-                      className="accent-accent"
+                      className="tap-check"
                     />
                     <span>
                       {z}-{lbl}
@@ -986,6 +1073,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               para registrar la lateralidad — se guarda como observación, no en el
               denominador.
             </p>
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.mandible}
+                onAll={() => setMandibleZones(fillKeys(MANDIBLE_KEYS))}
+                onClear={() => setMandibleZones({})}
+              />
+            </div>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
@@ -1004,22 +1098,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                         <td className="border border-line-strong px-2 py-1">
                           {z}-{lbl}
                         </td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={!!mandibleZones[kL]}
-                            onChange={() => toggleMandible(kL)}
-                            className="accent-accent"
-                          />
-                        </td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={!!mandibleZones[kR]}
-                            onChange={() => toggleMandible(kR)}
-                            className="accent-accent"
-                          />
-                        </td>
+                        <CheckCell checked={!!mandibleZones[kL]} onChange={() => toggleMandible(kL)} />
+                        <CheckCell checked={!!mandibleZones[kR]} onChange={() => toggleMandible(kR)} />
                       </tr>
                     );
                   })}
@@ -1050,6 +1130,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.vertebrae && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.vertebrae}
+                onAll={() => setVertebraeZones(fillKeys(VERTEBRAE_KEYS))}
+                onClear={() => setVertebraeZones({})}
+              />
+            </div>
             <h4 className="text-sm font-semibold text-muted">Cervicales (C1-C7)</h4>
             {renderVertebraeBlock("C", 7)}
             <h4 className="text-sm font-semibold text-muted">Torácicas (T1-T12)</h4>
@@ -1075,17 +1162,24 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               4 zonas-tipo de Knüsel &amp; Outram (Fig. 2d). Reemplaza el esquema previo
               de 5 segmentos × 4 zonas.
             </p>
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.sacrum}
+                onAll={() => setSacrumZones(fillKeys(SACRUM_KEYS))}
+                onClear={() => setSacrumZones({})}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {SACRUM_ZONES.map(({ key, label }, i) => (
                 <label
                   key={key}
-                  className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
+                  className="tap-label flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={!!sacrumZones[key]}
                     onChange={() => toggleSacrum(key)}
-                    className="accent-accent"
+                    className="tap-check"
                   />
                   <span>
                     {i + 1} - {label}
@@ -1108,19 +1202,26 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.sternum && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.sternum}
+                onAll={() => setSternumZones(fillKeys(STERNUM_KEYS))}
+                onClear={() => setSternumZones({})}
+              />
+            </div>
             <div className="flex flex-wrap gap-3">
               {Object.entries(STERNUM_ZONES).map(([z, lbl]) => {
                 const key = `stern_${z}`;
                 return (
                   <label
                     key={z}
-                    className="flex items-center gap-2 text-xs bg-surface-2 rounded px-3 py-2 hover:bg-surface-2 cursor-pointer"
+                    className="tap-label flex items-center gap-2 text-xs bg-surface-2 rounded px-3 py-2 hover:bg-surface-2 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={!!sternumZones[key]}
                       onChange={() => toggleSternum(key)}
-                      className="accent-accent"
+                      className="tap-check"
                     />
                     <span>
                       {z}-{lbl}
@@ -1144,6 +1245,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.clavicle && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.clavicle}
+                onAll={() => setClavicleZones(fillKeys(CLAVICLE_KEYS))}
+                onClear={() => setClavicleZones({})}
+              />
+            </div>
             {renderBilateralZoneGrid(3, clavicleZones, toggleClavicle, "clav", CLAVICLE_ZONES)}
             <CompletionBadge present={clavicleStats.present} total={6} />
           </div>
@@ -1160,6 +1268,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.ribs && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.ribs}
+                onAll={() => setRibZones(fillKeys(RIB_KEYS))}
+                onClear={() => setRibZones({})}
+              />
+            </div>
             <div className="overflow-x-auto">
               <table className="text-xs border-collapse w-full">
                 <thead>
@@ -1196,33 +1311,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                       {range(1, 3).map((z) => {
                         const key = `rib${rib}_z${z}_L`;
                         return (
-                          <td
-                            key={`L${z}`}
-                            className="border border-line-strong px-2 py-1 text-center"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!ribZones[key]}
-                              onChange={() => toggleRib(key)}
-                              className="accent-accent"
-                            />
-                          </td>
+                          <CheckCell key={`L${z}`} checked={!!ribZones[key]} onChange={() => toggleRib(key)} />
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `rib${rib}_z${z}_R`;
                         return (
-                          <td
-                            key={`R${z}`}
-                            className="border border-line-strong px-2 py-1 text-center"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!ribZones[key]}
-                              onChange={() => toggleRib(key)}
-                              className="accent-accent"
-                            />
-                          </td>
+                          <CheckCell key={`R${z}`} checked={!!ribZones[key]} onChange={() => toggleRib(key)} />
                         );
                       })}
                     </tr>
@@ -1245,6 +1340,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.scapula && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.scapula}
+                onAll={() => setScapulaZones(fillKeys(SCAPULA_KEYS))}
+                onClear={() => setScapulaZones({})}
+              />
+            </div>
             {renderBilateralZoneGrid(9, scapulaZones, toggleScapula, "scap")}
             <CompletionBadge present={scapulaStats.present} total={18} />
           </div>
@@ -1261,6 +1363,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.humerus && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.humerus}
+                onAll={() => setHumerusZones(fillKeys(HUMERUS_KEYS))}
+                onClear={() => setHumerusZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               11,
               humerusZones,
@@ -1284,6 +1393,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.radius && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.radius}
+                onAll={() => setRadiusZones(fillKeys(RADIUS_KEYS))}
+                onClear={() => setRadiusZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               11,
               radiusZones,
@@ -1308,6 +1424,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.ulna && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.ulna}
+                onAll={() => setUlnaZones(fillKeys(ULNA_KEYS))}
+                onClear={() => setUlnaZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               9,
               ulnaZones,
@@ -1332,6 +1455,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.osCoxae && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.osCoxae}
+                onAll={() => setOsCoxaeZones(fillKeys(OS_COXAE_KEYS))}
+                onClear={() => setOsCoxaeZones({})}
+              />
+            </div>
             {renderBilateralZoneGrid(12, osCoxaeZones, toggleOsCoxae, "cox")}
             <CompletionBadge present={osCoxaeStats.present} total={24} />
           </div>
@@ -1348,6 +1478,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.femur && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.femur}
+                onAll={() => setFemurZones(fillKeys(FEMUR_KEYS))}
+                onClear={() => setFemurZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               11,
               femurZones,
@@ -1371,6 +1508,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.tibia && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.tibia}
+                onAll={() => setTibiaZones(fillKeys(TIBIA_KEYS))}
+                onClear={() => setTibiaZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               10,
               tibiaZones,
@@ -1394,6 +1538,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.fibula && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="flex justify-end mb-3">
+              <BulkControls
+                label={SECTION_LABELS.fibula}
+                onAll={() => setFibulaZones(fillKeys(FIBULA_KEYS))}
+                onClear={() => setFibulaZones({})}
+              />
+            </div>
             {renderBilateralWithFusion(
               6,
               fibulaZones,
@@ -1420,22 +1571,29 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
             <p className="text-xs text-faint">
               La rótula es un elemento propio (sale de “Pie”). Presencia por lado.
             </p>
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.patella}
+                onAll={() => setPatellaZones(fillKeys(PATELLA_KEYS))}
+                onClear={() => setPatellaZones({})}
+              />
+            </div>
             <div className="flex gap-6">
-              <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <label className="tap-label flex items-center gap-2 text-xs cursor-pointer">
                 <input
                   type="checkbox"
                   checked={!!patellaZones["pat_L"]}
                   onChange={() => togglePatella("pat_L")}
-                  className="accent-accent"
+                  className="tap-check"
                 />
                 <span>Izquierda</span>
               </label>
-              <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <label className="tap-label flex items-center gap-2 text-xs cursor-pointer">
                 <input
                   type="checkbox"
                   checked={!!patellaZones["pat_R"]}
                   onChange={() => togglePatella("pat_R")}
-                  className="accent-accent"
+                  className="tap-check"
                 />
                 <span>Derecha</span>
               </label>
@@ -1454,6 +1612,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.hand && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.hand}
+                onAll={() => setHandZones(fillKeys(HAND_KEYS))}
+                onClear={() => setHandZones({})}
+              />
+            </div>
             {/* Metacarpals */}
             <h4 className="text-sm font-semibold text-muted">
               Metacarpos (MC1-MC5) - 3 zonas c/u
@@ -1487,17 +1652,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                       {range(1, 3).map((z) => {
                         const key = `hMC${mc}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
-                          </td>
+                          <CheckCell key={`L${z}`} checked={!!handZones[key]} onChange={() => toggleHand(key)} />
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `hMC${mc}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!handZones[key]} onChange={() => toggleHand(key)} className="accent-accent" />
-                          </td>
+                          <CheckCell key={`R${z}`} checked={!!handZones[key]} onChange={() => toggleHand(key)} />
                         );
                       })}
                     </tr>
@@ -1530,12 +1691,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                     return (
                       <tr key={c} className="hover:bg-surface-2">
                         <td className="border border-line-strong px-2 py-1 font-medium">{c}</td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!handZones[kL]} onChange={() => toggleHand(kL)} className="accent-accent" />
-                        </td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!handZones[kR]} onChange={() => toggleHand(kR)} className="accent-accent" />
-                        </td>
+                        <CheckCell checked={!!handZones[kL]} onChange={() => toggleHand(kL)} />
+                        <CheckCell checked={!!handZones[kR]} onChange={() => toggleHand(kR)} />
                       </tr>
                     );
                   })}
@@ -1555,6 +1712,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.foot && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <div className="flex justify-end">
+              <BulkControls
+                label={SECTION_LABELS.foot}
+                onAll={() => setFootZones(fillKeys(FOOT_KEYS))}
+                onClear={() => setFootZones({})}
+              />
+            </div>
             {/* Metatarsals */}
             <h4 className="text-sm font-semibold text-muted">
               Metatarsos (MT1-MT5) - 3 zonas c/u
@@ -1580,17 +1744,13 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                       {range(1, 3).map((z) => {
                         const key = `fMT${mt}_z${z}_L`;
                         return (
-                          <td key={`L${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
-                          </td>
+                          <CheckCell key={`L${z}`} checked={!!footZones[key]} onChange={() => toggleFoot(key)} />
                         );
                       })}
                       {range(1, 3).map((z) => {
                         const key = `fMT${mt}_z${z}_R`;
                         return (
-                          <td key={`R${z}`} className="border border-line-strong px-2 py-1 text-center">
-                            <input type="checkbox" checked={!!footZones[key]} onChange={() => toggleFoot(key)} className="accent-accent" />
-                          </td>
+                          <CheckCell key={`R${z}`} checked={!!footZones[key]} onChange={() => toggleFoot(key)} />
                         );
                       })}
                     </tr>
@@ -1631,12 +1791,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                     return (
                       <tr key={t} className="hover:bg-surface-2">
                         <td className="border border-line-strong px-2 py-1 font-medium">{t}</td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!footZones[kL]} onChange={() => toggleFoot(kL)} className="accent-accent" />
-                        </td>
-                        <td className="border border-line-strong px-2 py-1 text-center">
-                          <input type="checkbox" checked={!!footZones[kR]} onChange={() => toggleFoot(kR)} className="accent-accent" />
-                        </td>
+                        <CheckCell checked={!!footZones[kL]} onChange={() => toggleFoot(kL)} />
+                        <CheckCell checked={!!footZones[kR]} onChange={() => toggleFoot(kR)} />
                       </tr>
                     );
                   })}
@@ -1872,15 +2028,15 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.taphonomy && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2">
               {TAPHONOMY_OPTIONS.map(({ key, label }) => (
                 <div key={key}>
-                  <label className="flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer">
+                  <label className="tap-label flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!taphonomy[key]}
                       onChange={() => toggleTaph(key)}
-                      className="accent-accent"
+                      className="tap-check"
                     />
                     <span>{label}</span>
                   </label>

@@ -84,32 +84,38 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   taphonomy: "Alteraciones tafonómicas",
 };
 
+/* ------------------------------------------------------------------ */
+/*  Descripciones anatómicas — texto completo de la ficha indicial     */
+/*  (Knüsel & Outram 2004). Son SÓLO etiquetas de display; no afectan  */
+/*  claves, modelo de datos ni el cómputo de métricas del backend.     */
+/* ------------------------------------------------------------------ */
+
 const CRANIUM_ZONES: Record<number, string> = {
-  1: "Frontal der",
-  2: "Frontal izq",
-  3: "Parietal der",
-  4: "Parietal izq",
+  1: "Frontal derecho (dividido sagitalmente por sutura metópica)",
+  2: "Frontal izquierdo",
+  3: "Parietal derecho",
+  4: "Parietal izquierdo",
   5: "Occipital",
-  6: "Temporal izq",
-  7: "Temporal der",
-  8: "Esfenoides izq",
-  9: "Esfenoides der",
-  10: "Cigomático izq",
-  11: "Cigomático der",
-  12: "Maxilar izq",
-  13: "Maxilar der",
-  14: "Nasal izq",
-  15: "Nasal der",
+  6: "Temporal izquierdo (incl. raíz del proceso cigomático)",
+  7: "Temporal derecho (incl. raíz del proceso cigomático)",
+  8: "Esfenoides izquierdo",
+  9: "Esfenoides derecho",
+  10: "Cigomático izquierdo",
+  11: "Cigomático derecho",
+  12: "Maxilar izquierdo (incl. proceso palatino)",
+  13: "Maxilar derecho (incl. proceso palatino)",
+  14: "Hueso nasal izquierdo",
+  15: "Hueso nasal derecho",
 };
 
 const MANDIBLE_ZONES: Record<number, string> = {
-  1: "Cuerpo PM/M",
-  2: "Cuerpo canino",
-  3: "Rama ascendente",
-  4: "Proc. coronoides",
-  5: "Rama post./cóndilo",
-  6: "Ángulo gonial",
-  7: "Cuerpo anterior/incisivos",
+  1: "Cuerpo: alveolos de premolares y molares",
+  2: "Cuerpo: alveolo del canino",
+  3: "Rama ascendente inferior al proceso coronoides",
+  4: "Proceso coronoides",
+  5: "Porción post. de la rama y cóndilo mandibular",
+  6: "Ángulo gonial, foramen mandibular, surco milohioideo (int.), inserción M. masetero (ext.)",
+  7: "Porción anterior del cuerpo: alveolos de incisivos",
 };
 
 const VERTEBRA_ZONES: Record<number, string> = {
@@ -119,31 +125,287 @@ const VERTEBRA_ZONES: Record<number, string> = {
   4: "Espinosa",
 };
 
+/* Descripción completa de las 4 zonas-tipo de vértebra (para leyenda). */
+const VERTEBRA_ZONES_FULL: Record<number, string> = {
+  1: "Cuerpo vertebral",
+  2: "Proceso transverso derecho (incl. pedículo, pars interarticularis, facetas articulares)",
+  3: "Proceso transverso izquierdo (incl. pedículo, pars interarticularis, facetas articulares)",
+  4: "Proceso espinoso",
+};
+
 /* Sacro — 4 zonas K&O (Fig 2d). Reemplaza los 5 segmentos × 4 = 20 previos.
  * Claves canónicas que el backend computa: sac_z1..4 (ver lib/metrics.ts). */
 const SACRUM_ZONES: { key: string; label: string }[] = [
   { key: "sac_z1", label: "Cuerpo" },
-  { key: "sac_z2", label: "Ala derecha" },
-  { key: "sac_z3", label: "Ala izquierda" },
-  { key: "sac_z4", label: "Cresta / espinosa" },
+  { key: "sac_z2", label: "Ala / proceso transverso derecho" },
+  { key: "sac_z3", label: "Ala / proceso transverso izquierdo" },
+  { key: "sac_z4", label: "Cresta / proceso espinoso" },
 ];
 
 const STERNUM_ZONES: Record<number, string> = {
   1: "Manubrio",
-  2: "Cuerpo",
-  3: "Xifoides",
+  2: "Cuerpo (corpus sterni)",
+  3: "Proceso xifoides",
 };
 
 const CLAVICLE_ZONES: Record<number, string> = {
-  1: "Ext. esternal",
-  2: "Ext. acromial",
+  1: "Extremo esternal",
+  2: "Extremo acromial",
   3: "Diáfisis",
 };
 
-const RIB_ZONES: Record<number, string> = {
+/* Descripción completa de las 3 zonas-tipo de costilla (para leyenda). */
+const RIB_ZONES_FULL: Record<number, string> = {
   1: "Cabeza",
-  2: "Ángulo",
-  3: "Cuerpo",
+  2: "Ángulo / tubérculo (facetas costales en C1-C10)",
+  3: "Cuerpo y extremo esternal",
+};
+
+const SCAPULA_ZONES: Record<number, string> = {
+  1: "Proceso coracoides",
+  2: "Mitad superior cavidad glenoidea",
+  3: "Mitad inferior cavidad glenoidea",
+  4: "Extremo acromial y 1/3 axilar de la espina",
+  5: "1/3 axilar porción escamosa, cuello, área inf. al coracoides",
+  6: "1/3 medio porción escamosa sup. a espina, fosa supraespinosa",
+  7: "Mitad axilar porción escamosa inf. a espina, fosa infraespinosa",
+  8: "1/3 vertebral porción escamosa y espina, inserción M. romboides",
+  9: "Mitad vertebral porción escamosa inf. a espina",
+};
+
+const HUMERUS_ZONES: Record<number | string, string> = {
+  1: "Tubérculos mayor y menor",
+  2: "Cabeza (caput)",
+  3: "Epicóndilo lateral",
+  4: "Epicóndilo medial",
+  5: "Capitulum (proc. art. lateral del cóndilo)",
+  6: "Tróclea (proc. art. medial del cóndilo)",
+  7: "Mitad lateral distal diáfisis, fosa olecraniana/radial",
+  8: "Mitad medial distal diáfisis, fosa olecraniana/coronoidea, for. nutricio",
+  9: "Área tuberosidad deltoidea",
+  10: "Área opuesta a Z9, mitad longitudinal diáfisis",
+  11: "Porción proximal diáfisis, cuello quirúrgico",
+};
+
+const RADIUS_ZONES: Record<number | string, string> = {
+  1: "Mitad lateral cabeza radial",
+  2: "Mitad medial cabeza radial",
+  3: "Porción lateral articulación distal",
+  4: "Porción medial articulación distal",
+  5: "Porción proximal diáfisis, tuberosidad radial",
+  6: "Mitad lateral diáfisis hasta punto medio, inserción M. pronador redondo",
+  7: "Mitad medial diáfisis hasta punto medio, foramen nutricio",
+  8: "Mitad superior del tercio distal",
+  9: "Tercio distal lateral diáfisis",
+  10: "Tercio distal medial diáfisis",
+  J: "Proceso estiloides",
+};
+
+const ULNA_ZONES: Record<string, string> = {
+  A: "Proceso olecraniano (porción 1)",
+  B: "Proceso olecraniano (porción 2)",
+  C: "Escotadura troclear/semilunar, proceso coronoides",
+  D: "Escotadura radial",
+  E: "Mitad proximal diáfisis distal a C, for. nutricio",
+  F: "Porción media diáfisis",
+  G: "Mitad superior 1/3 distal diáfisis",
+  H: "Mitad distal 1/3 distal, inserción M. pronador cuadrado",
+  J: "Proceso estiloides y cabeza, surco M. ext. carpi ulnaris",
+};
+
+const OS_COXAE_ZONES: Record<number, string> = {
+  1: "Porción superior acetábulo y áreas adyacentes",
+  2: "Mitad post. porción inf. acetábulo",
+  3: "Mitad ant. porción inf. acetábulo",
+  4: "Porción sup. isquion, espina isquiática",
+  5: "Porción inf. ilion, escotadura ciática mayor",
+  6: "Porción sup. tuberosidad isquiática",
+  7: "Superficie auricular del ilion",
+  8: "Porción sup. pubis, línea pectínea, tubérculo púbico",
+  9: "Porción inf. pubis, sínfisis púbica",
+  10: "Porción mayor del ilion (sin cresta)",
+  11: "Porción inf. isquion, mayoría tuberosidad isquiática",
+  12: "Cresta ilíaca",
+};
+
+const FEMUR_ZONES: Record<number, string> = {
+  1: "Trocánter mayor",
+  2: "Área del trocánter menor",
+  3: "Inserción craneal M. glúteo máximo",
+  4: "Cabeza (caput)",
+  5: "Cuello, línea intertrocantérica (ant.), cresta intertrocantérica (post.)",
+  6: "Porción media diáfisis hasta bifurcación línea áspera, for. nutricio",
+  7: "Mitad lateral 1/3 distal diáfisis, mitad espacio poplíteo",
+  8: "Mitad medial 1/3 distal diáfisis, mitad espacio poplíteo",
+  9: "Cóndilo y epicóndilo lateral",
+  10: "Cóndilo y epicóndilo medial",
+  11: "Espacio intercondíleo y articulación distal anteriormente",
+};
+
+const TIBIA_ZONES: Record<number, string> = {
+  1: "Cóndilo proximal medial",
+  2: "Fosa intercondílea / espinas tibiales, inserción lig. cruzado post.",
+  3: "Cóndilo proximal lateral",
+  4: "Tuberosidad tibial",
+  5: "Maleólo medial",
+  6: "Maleólo lateral",
+  7: "1/4 proximal diáfisis, for. nutricio (post.)",
+  8: "2.º cuarto diáfisis",
+  9: "3.º cuarto diáfisis",
+  10: "4.º cuarto (distal) diáfisis",
+};
+
+const FIBULA_ZONES: Record<number, string> = {
+  1: "Extremo proximal (epífisis), proceso estiloides",
+  2: "Extremo distal (epífisis)",
+  3: "1/4 más distal diáfisis, inserción lig. interóseo inf.",
+  4: "1/4 medio diáfisis, for. nutricio (post.)",
+  5: "2.º cuarto diáfisis",
+  6: "1/4 más proximal diáfisis",
+};
+
+/* Zonas de mano/pie por elemento largo (metacarpos/metatarsos/falanges). */
+const LONG_BONE_MCMT_ZONES: Record<number, string> = {
+  1: "Articulación proximal",
+  2: "Cóndilo articular distal",
+  3: "Diáfisis",
+};
+
+const CALCANEUS_ZONES: Record<number, string> = {
+  1: "Tuber calcis",
+  2: "Porción distal cuerpo",
+  3: "Sustentaculum tali",
+  4: "Articulación proximal",
+  5: "Porción prox. cuerpo inf. a articulación",
+};
+
+const TALUS_ZONES: Record<number, string> = {
+  1: "Mitad medial tróclea",
+  2: "Mitad lateral tróclea",
+  3: "Mitad medial porción prox.",
+  4: "Mitad lateral porción prox.",
+};
+
+const HAND_CARPAL_NAMES: Record<string, string> = {
+  TPM: "Trapecio",
+  TRD: "Trapezoide",
+  CAP: "Grande (capitatum)",
+  HAM: "Ganchoso (hamatum)",
+  SCP: "Escafoides",
+  LUN: "Semilunar",
+  TRI: "Piramidal",
+  PIS: "Pisiforme",
+};
+
+const FOOT_TARSAL_NAMES: Record<string, string> = {
+  CU1: "Cuneiforme medial",
+  CU2: "Cuneiforme intermedio",
+  CU3: "Cuneiforme lateral",
+  NAV: "Navicular",
+  CUB: "Cuboides",
+};
+
+/* ------------------------------------------------------------------ */
+/*  Figuras de referencia (ficha indicial K&O) por sección            */
+/*  Dibujos con los números de zona. PNG en /public/zonacion/.        */
+/* ------------------------------------------------------------------ */
+
+type RefFigure = { src: string; alt: string };
+interface SectionFigures {
+  caption: string;      // leyenda (norma / vistas + n.º de figura K&O)
+  images: RefFigure[];
+}
+
+const REFERENCE_FIGURES: Partial<Record<SectionKey, SectionFigures>> = {
+  cranium: {
+    caption:
+      "Cráneo — arriba: norma facialis, lateralis dextra y sinistra (Figs. 13-15). Abajo: norma verticalis, occipitalis y basalis (Figs. 16-18).",
+    images: [
+      { src: "/zonacion/cranium-facialis-1.png", alt: "Cráneo — norma facialis (Fig. 13)" },
+      { src: "/zonacion/cranium-facialis-2.png", alt: "Cráneo — norma lateralis dextra (Fig. 14)" },
+      { src: "/zonacion/cranium-facialis-3.png", alt: "Cráneo — norma lateralis sinistra (Fig. 15)" },
+      { src: "/zonacion/cranium-verticalis-1.png", alt: "Cráneo — norma verticalis (Fig. 17)" },
+      { src: "/zonacion/cranium-verticalis-2.png", alt: "Cráneo — norma occipitalis (Fig. 16)" },
+      { src: "/zonacion/cranium-verticalis-3.png", alt: "Cráneo — norma basalis (Fig. 18)" },
+    ],
+  },
+  mandible: {
+    caption: "Mandíbula — vistas medial y lateral (Fig. 1).",
+    images: [{ src: "/zonacion/mandible.png", alt: "Mandíbula — zonas 1-7 (Fig. 1)" }],
+  },
+  vertebrae: {
+    caption: "Vértebra — vistas superior y lateral: cervical (2a), torácica (2b), lumbar (2c). Las 4 zonas-tipo aplican a toda la columna.",
+    images: [
+      { src: "/zonacion/vertebra-2a.png", alt: "Vértebra cervical (Fig. 2a)" },
+      { src: "/zonacion/vertebra-2b.png", alt: "Vértebra torácica (Fig. 2b)" },
+      { src: "/zonacion/vertebra-2c.png", alt: "Vértebra lumbar (Fig. 2c)" },
+    ],
+  },
+  sacrum: {
+    caption: "Sacro — vistas ventral y dorsal (Fig. 2d).",
+    images: [{ src: "/zonacion/sacrum.png", alt: "Sacro — zonas 1-4 (Fig. 2d)" }],
+  },
+  sternum: {
+    caption: "Esternón (Fig. 19).",
+    images: [{ src: "/zonacion/sternum.png", alt: "Esternón — zonas 1-3 (Fig. 19)" }],
+  },
+  clavicle: {
+    caption: "Clavícula (Fig. 20).",
+    images: [{ src: "/zonacion/clavicle.png", alt: "Clavícula — zonas 1-3 (Fig. 20)" }],
+  },
+  ribs: {
+    caption: "Costillas — 1.ª costilla (3a) y costilla tipo (3b) (Fig. 3).",
+    images: [
+      { src: "/zonacion/rib-3a.png", alt: "1.ª costilla (Fig. 3a)" },
+      { src: "/zonacion/rib-3b.png", alt: "Costilla tipo (Fig. 3b)" },
+    ],
+  },
+  scapula: {
+    caption: "Escápula — vistas ventral y dorsal (Fig. 4).",
+    images: [{ src: "/zonacion/scapula.png", alt: "Escápula — zonas 1-9 (Fig. 4)" }],
+  },
+  humerus: {
+    caption: "Húmero — vistas posterior y anterior (Fig. 5).",
+    images: [{ src: "/zonacion/humerus.png", alt: "Húmero — zonas 1-11 (Fig. 5)" }],
+  },
+  radius: {
+    caption: "Radio — vistas posterior y anterior (Fig. 6).",
+    images: [{ src: "/zonacion/radius.png", alt: "Radio — zonas 1-10 + J (Fig. 6)" }],
+  },
+  ulna: {
+    caption: "Cúbito / ulna — vistas posterior y anterior (Fig. 7).",
+    images: [{ src: "/zonacion/ulna.png", alt: "Cúbito — zonas A-J (Fig. 7)" }],
+  },
+  osCoxae: {
+    caption: "Hueso coxal — vistas medial y lateral (Fig. 8).",
+    images: [{ src: "/zonacion/os-coxae.png", alt: "Coxal — zonas 1-12 (Fig. 8)" }],
+  },
+  femur: {
+    caption: "Fémur — vistas posterior y anterior (Fig. 9).",
+    images: [{ src: "/zonacion/femur.png", alt: "Fémur — zonas 1-11 (Fig. 9)" }],
+  },
+  tibia: {
+    caption: "Tibia — vistas posterior y anterior (Fig. 10).",
+    images: [{ src: "/zonacion/tibia.png", alt: "Tibia — zonas 1-10 (Fig. 10)" }],
+  },
+  fibula: {
+    caption: "Peroné / fíbula — vistas anterior y posterior (Fig. 21).",
+    images: [{ src: "/zonacion/fibula.png", alt: "Peroné — zonas 1-6 (Fig. 21)" }],
+  },
+  hand: {
+    caption: "Mano — vistas dorsal (11a) y palmar (11b) (Fig. 11).",
+    images: [
+      { src: "/zonacion/hand-11a.png", alt: "Mano — vista dorsal (Fig. 11a)" },
+      { src: "/zonacion/hand-11b.png", alt: "Mano — vista palmar (Fig. 11b)" },
+    ],
+  },
+  foot: {
+    caption: "Pie — vistas dorsal (12a) y plantar (12b) (Fig. 12).",
+    images: [
+      { src: "/zonacion/foot-12a.png", alt: "Pie — vista dorsal (Fig. 12a)" },
+      { src: "/zonacion/foot-12b.png", alt: "Pie — vista plantar (Fig. 12b)" },
+    ],
+  },
 };
 
 const FRAGMENT_TYPES = [
@@ -432,6 +694,70 @@ function BulkControls({
       >
         Limpiar
       </button>
+    </div>
+  );
+}
+
+/* Figura(s) de referencia de la ficha indicial (dibujos con n.º de zona).
+ * Panel plegable, visible por defecto. Las láminas son line-art negro sobre
+ * blanco → se renderizan siempre sobre fondo claro para que se vean también
+ * en modo oscuro. */
+function ReferenceFigure({ section }: { section: SectionKey }) {
+  const fig = REFERENCE_FIGURES[section];
+  const [open, setOpen] = useState(true);
+  if (!fig) return null;
+  return (
+    <div className="border border-line rounded-lg bg-surface-2 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted hover:bg-line-strong transition"
+        aria-expanded={open}
+      >
+        <span>📖 Figura de referencia (Knüsel &amp; Outram)</span>
+        <span>{open ? "Ocultar ▲" : "Ver figura ▼"}</span>
+      </button>
+      {open && (
+        <div className="p-3 space-y-2">
+          <div className="flex flex-wrap gap-3 justify-center">
+            {fig.images.map((im) => (
+              <div key={im.src} className="bg-white rounded-md p-2 border border-line">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={im.src}
+                  alt={im.alt}
+                  loading="lazy"
+                  className="block h-auto max-h-[420px] w-auto max-w-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-faint text-center">{fig.caption}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Leyenda compacta de descripciones de zona, para secciones que se registran
+ * como matriz (vértebras, costillas, mano, pie) donde no cabe la descripción
+ * completa en el encabezado de columna. */
+function ZoneLegend({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: { z: string; label: string }[];
+}) {
+  return (
+    <div className="text-xs text-muted bg-surface-2 rounded-md px-3 py-2">
+      <span className="font-semibold">{title}:</span>{" "}
+      {entries.map((e, i) => (
+        <span key={e.z}>
+          <span className="font-medium">{e.z}</span> {e.label}
+          {i < entries.length - 1 ? " · " : ""}
+        </span>
+      ))}
     </div>
   );
 }
@@ -862,6 +1188,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     fusionState: Record<string, string>,
     fusionSetter: React.Dispatch<React.SetStateAction<Record<string, string>>>,
     zones?: (number | string)[],
+    zoneLabels?: Record<number | string, string>,
   ) {
     const zoneKeys = zones ?? range(1, zoneCount);
     return (
@@ -907,7 +1234,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               return (
                 <tr key={String(z)} className="hover:bg-surface-2">
                   <td className="border border-line-strong px-2 py-1">
-                    Z{z}
+                    <span className="font-medium">Z{z}</span>
+                    {zoneLabels?.[z] ? ` - ${zoneLabels[z]}` : null}
                     {!isEpiphysis && (
                       <span className="ml-1 text-faint" title="Diáfisis">
                         (diáfisis)
@@ -1015,6 +1343,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.cranium && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <ReferenceFigure section="cranium" />
             <div className="flex justify-end">
               <BulkControls
                 label={SECTION_LABELS.cranium}
@@ -1022,7 +1351,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                 onClear={() => setCraniumZones({})}
               />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {Object.entries(CRANIUM_ZONES).map(([z, lbl]) => {
                 const key = `cran_${z}`;
                 return (
@@ -1067,6 +1396,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.mandible && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <ReferenceFigure section="mandible" />
             <p className="text-xs text-faint">
               Completitud sobre <strong>7 zonas-tipo</strong> (Knüsel &amp; Outram): una
               zona cuenta como presente si está de cualquier lado. Marcá el lado (izq/der)
@@ -1130,6 +1460,14 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.vertebrae && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <ReferenceFigure section="vertebrae" />
+            <ZoneLegend
+              title="Zonas (todas las vértebras)"
+              entries={Object.entries(VERTEBRA_ZONES_FULL).map(([z, label]) => ({
+                z: `Z${z}`,
+                label,
+              }))}
+            />
             <div className="flex justify-end">
               <BulkControls
                 label={SECTION_LABELS.vertebrae}
@@ -1158,6 +1496,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.sacrum && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
+            <ReferenceFigure section="sacrum" />
             <p className="text-xs text-faint">
               4 zonas-tipo de Knüsel &amp; Outram (Fig. 2d). Reemplaza el esquema previo
               de 5 segmentos × 4 zonas.
@@ -1202,6 +1541,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.sternum && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="sternum" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.sternum}
@@ -1245,6 +1587,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.clavicle && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="clavicle" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.clavicle}
@@ -1268,6 +1613,16 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.ribs && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3 space-y-2">
+              <ReferenceFigure section="ribs" />
+              <ZoneLegend
+                title="Zonas (todas las costillas)"
+                entries={Object.entries(RIB_ZONES_FULL).map(([z, label]) => ({
+                  z: `Z${z}`,
+                  label,
+                }))}
+              />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.ribs}
@@ -1340,6 +1695,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.scapula && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="scapula" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.scapula}
@@ -1347,7 +1705,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                 onClear={() => setScapulaZones({})}
               />
             </div>
-            {renderBilateralZoneGrid(9, scapulaZones, toggleScapula, "scap")}
+            {renderBilateralZoneGrid(9, scapulaZones, toggleScapula, "scap", SCAPULA_ZONES)}
             <CompletionBadge present={scapulaStats.present} total={18} />
           </div>
         )}
@@ -1363,6 +1721,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.humerus && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="humerus" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.humerus}
@@ -1376,7 +1737,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               toggleHumerus,
               "hum",
               humerusFusion,
-              setHumerusFusion
+              setHumerusFusion,
+              undefined,
+              HUMERUS_ZONES
             )}
             <CompletionBadge present={humerusStats.present} total={22} />
           </div>
@@ -1393,6 +1756,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.radius && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="radius" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.radius}
@@ -1407,7 +1773,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               "rad",
               radiusFusion,
               setRadiusFusion,
-              [...range(1, 10), "J"]
+              [...range(1, 10), "J"],
+              RADIUS_ZONES
             )}
             <CompletionBadge present={radiusStats.present} total={22} />
           </div>
@@ -1424,6 +1791,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.ulna && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="ulna" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.ulna}
@@ -1438,7 +1808,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               "uln",
               ulnaFusion,
               setUlnaFusion,
-              ["A", "B", "C", "D", "E", "F", "G", "H", "J"]
+              ["A", "B", "C", "D", "E", "F", "G", "H", "J"],
+              ULNA_ZONES
             )}
             <CompletionBadge present={ulnaStats.present} total={18} />
           </div>
@@ -1455,6 +1826,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.osCoxae && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="osCoxae" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.osCoxae}
@@ -1462,7 +1836,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                 onClear={() => setOsCoxaeZones({})}
               />
             </div>
-            {renderBilateralZoneGrid(12, osCoxaeZones, toggleOsCoxae, "cox")}
+            {renderBilateralZoneGrid(12, osCoxaeZones, toggleOsCoxae, "cox", OS_COXAE_ZONES)}
             <CompletionBadge present={osCoxaeStats.present} total={24} />
           </div>
         )}
@@ -1478,6 +1852,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.femur && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="femur" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.femur}
@@ -1491,7 +1868,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               toggleFemur,
               "fem",
               femurFusion,
-              setFemurFusion
+              setFemurFusion,
+              undefined,
+              FEMUR_ZONES
             )}
             <CompletionBadge present={femurStats.present} total={22} />
           </div>
@@ -1508,6 +1887,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.tibia && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="tibia" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.tibia}
@@ -1521,7 +1903,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               toggleTibia,
               "tib",
               tibiaFusion,
-              setTibiaFusion
+              setTibiaFusion,
+              undefined,
+              TIBIA_ZONES
             )}
             <CompletionBadge present={tibiaStats.present} total={20} />
           </div>
@@ -1538,6 +1922,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.fibula && (
           <div className="border border-line rounded-b-lg p-4 bg-surface">
+            <div className="mb-3">
+              <ReferenceFigure section="fibula" />
+            </div>
             <div className="flex justify-end mb-3">
               <BulkControls
                 label={SECTION_LABELS.fibula}
@@ -1551,7 +1938,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               toggleFibula,
               "fib",
               fibulaFusion,
-              setFibulaFusion
+              setFibulaFusion,
+              undefined,
+              FIBULA_ZONES
             )}
             <CompletionBadge present={fibulaStats.present} total={12} />
           </div>
@@ -1612,6 +2001,14 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.hand && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <ReferenceFigure section="hand" />
+            <ZoneLegend
+              title="Zonas de metacarpos y falanges"
+              entries={Object.entries(LONG_BONE_MCMT_ZONES).map(([z, label]) => ({
+                z: `Z${z}`,
+                label,
+              }))}
+            />
             <div className="flex justify-end">
               <BulkControls
                 label={SECTION_LABELS.hand}
@@ -1690,7 +2087,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                     const kR = `hCarp_${c}_R`;
                     return (
                       <tr key={c} className="hover:bg-surface-2">
-                        <td className="border border-line-strong px-2 py-1 font-medium">{c}</td>
+                        <td className="border border-line-strong px-2 py-1 font-medium whitespace-nowrap">
+                          {c} — {HAND_CARPAL_NAMES[c]}
+                        </td>
                         <CheckCell checked={!!handZones[kL]} onChange={() => toggleHand(kL)} />
                         <CheckCell checked={!!handZones[kR]} onChange={() => toggleHand(kR)} />
                       </tr>
@@ -1712,6 +2111,14 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         />
         {openSections.foot && (
           <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
+            <ReferenceFigure section="foot" />
+            <ZoneLegend
+              title="Zonas de metatarsos y falanges"
+              entries={Object.entries(LONG_BONE_MCMT_ZONES).map(([z, label]) => ({
+                z: `Z${z}`,
+                label,
+              }))}
+            />
             <div className="flex justify-end">
               <BulkControls
                 label={SECTION_LABELS.foot}
@@ -1767,11 +2174,11 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
 
             {/* Calcaneus */}
             <h4 className="text-sm font-semibold text-muted">Calcáneo (5 zonas, L/R)</h4>
-            {renderBilateralZoneGrid(5, footZones, toggleFoot, "fCalc")}
+            {renderBilateralZoneGrid(5, footZones, toggleFoot, "fCalc", CALCANEUS_ZONES)}
 
             {/* Talus */}
             <h4 className="text-sm font-semibold text-muted">Astrágalo (4 zonas, L/R)</h4>
-            {renderBilateralZoneGrid(4, footZones, toggleFoot, "fTalus")}
+            {renderBilateralZoneGrid(4, footZones, toggleFoot, "fTalus", TALUS_ZONES)}
 
             {/* Tarsals */}
             <h4 className="text-sm font-semibold text-muted">Tarsos - presencia L/R</h4>
@@ -1790,7 +2197,9 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
                     const kR = `fTars_${t}_R`;
                     return (
                       <tr key={t} className="hover:bg-surface-2">
-                        <td className="border border-line-strong px-2 py-1 font-medium">{t}</td>
+                        <td className="border border-line-strong px-2 py-1 font-medium whitespace-nowrap">
+                          {t} — {FOOT_TARSAL_NAMES[t]}
+                        </td>
                         <CheckCell checked={!!footZones[kL]} onChange={() => toggleFoot(kL)} />
                         <CheckCell checked={!!footZones[kR]} onChange={() => toggleFoot(kR)} />
                       </tr>

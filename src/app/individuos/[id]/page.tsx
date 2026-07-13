@@ -96,9 +96,14 @@ export default function IndividuoDetailPage() {
               <p className="mt-3 max-w-prose text-sm text-muted">{individuo.observaciones}</p>
             )}
           </div>
-          <button onClick={handleDelete} className="btn btn-ghost text-danger">
-            Eliminar
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/individuos/${id}/editar`} className="btn btn-ghost">
+              Editar
+            </Link>
+            <button onClick={handleDelete} className="btn btn-ghost text-danger">
+              Eliminar
+            </button>
+          </div>
         </div>
       </header>
 

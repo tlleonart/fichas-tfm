@@ -126,3 +126,91 @@ export const comparacion = query({
     };
   },
 });
+
+/* ------------------------------------------------------------------ */
+/*  Dashboard (read-only) — "disponibilizar la data"                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Query de SOLO LECTURA para el dashboard de datos (/datos).
+ *
+ * Devuelve TODOS los individuos con su identidad + covariables y, por cada
+ * método, un flag de presencia, las `metricas` YA calculadas y guardadas
+ * (NO se recalcula nada aquí: `lib/metrics.ts` sigue siendo la única fuente de
+ * verdad) y el `data` crudo tal cual está en la base. El filtrado, los
+ * resúmenes y el export se resuelven client-side sobre este resultado.
+ *
+ * Eficiencia: un `collect()` de individuos y otro de fichas, unidos en memoria
+ * por `individuoId` (2 lecturas de tabla, sin N+1).
+ *
+ * Shape de cada elemento del array:
+ *   {
+ *     _id, codigoCanonico,
+ *     anioExcavacion, sitio, numeroFosa, codigoUF, numeroIndividuo,
+ *     sexoEstimado?, edadEstimada?, observaciones?,
+ *     revisionesPendientesCount: number,
+ *     zonacion: { presente: boolean, metricas?: any, data?: any,
+ *                 registrador?: string, fechaRegistro?: string,
+ *                 revisionesPendientes?: any[] },
+ *     eat:      { presente: boolean, metricas?: any, data?: any,
+ *                 registrador?: string, fechaRegistro?: string },
+ *   }
+ */
+export const dashboard = query({
+  args: {},
+  handler: async (ctx) => {
+    const individuos = await ctx.db.query("individuos").collect();
+    const fichas = await ctx.db.query("fichas").collect();
+
+    // Índice en memoria: individuoId -> fichas (evita N+1).
+    const porIndividuo = new Map<string, typeof fichas>();
+    for (const f of fichas) {
+      const k = f.individuoId as unknown as string;
+      const arr = porIndividuo.get(k);
+      if (arr) arr.push(f);
+      else porIndividuo.set(k, [f]);
+    }
+
+    return individuos.map((ind) => {
+      const fs = porIndividuo.get(ind._id as unknown as string) ?? [];
+      const zon = fs.find((f) => f.tipo === "zonacion");
+      const eat = fs.find((f) => f.tipo === "eat");
+      const revisiones = Array.isArray(zon?.revisionesPendientes)
+        ? zon!.revisionesPendientes
+        : [];
+
+      return {
+        _id: ind._id,
+        codigoCanonico: ind.codigoCanonico,
+        anioExcavacion: ind.anioExcavacion,
+        sitio: ind.sitio,
+        numeroFosa: ind.numeroFosa,
+        codigoUF: ind.codigoUF,
+        numeroIndividuo: ind.numeroIndividuo,
+        sexoEstimado: ind.sexoEstimado ?? null,
+        edadEstimada: ind.edadEstimada ?? null,
+        observaciones: ind.observaciones ?? null,
+        revisionesPendientesCount: revisiones.length,
+        zonacion: zon
+          ? {
+              presente: true,
+              metricas: zon.metricas ?? null,
+              data: zon.data ?? null,
+              registrador: zon.registrador,
+              fechaRegistro: zon.fechaRegistro,
+              revisionesPendientes: revisiones,
+            }
+          : { presente: false },
+        eat: eat
+          ? {
+              presente: true,
+              metricas: eat.metricas ?? null,
+              data: eat.data ?? null,
+              registrador: eat.registrador,
+              fechaRegistro: eat.fechaRegistro,
+            }
+          : { presente: false },
+      };
+    });
+  },
+});

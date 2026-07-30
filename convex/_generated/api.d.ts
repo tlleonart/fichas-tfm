@@ -9,6 +9,7 @@
  */
 
 import type * as analisis from "../analisis.js";
+import type * as cobertura from "../cobertura.js";
 import type * as fichas from "../fichas.js";
 import type * as individuos from "../individuos.js";
 import type * as lib_metrics from "../lib/metrics.js";
@@ -23,6 +24,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   analisis: typeof analisis;
+  cobertura: typeof cobertura;
   fichas: typeof fichas;
   individuos: typeof individuos;
   "lib/metrics": typeof lib_metrics;

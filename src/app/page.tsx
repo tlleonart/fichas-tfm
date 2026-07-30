@@ -26,6 +26,12 @@ export default function Home() {
           <Link href="/analisis" className="btn btn-ghost">
             Análisis comparativo
           </Link>
+          <Link href="/cobertura" className="btn btn-ghost">
+            Cobertura costillas/vértebras
+          </Link>
+          <Link href="/planilla" className="btn btn-ghost">
+            Planilla de totales
+          </Link>
         </div>
       </section>
 

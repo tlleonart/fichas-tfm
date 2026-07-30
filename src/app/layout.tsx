@@ -46,6 +46,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <>
                     <NavLink href="/individuos">Individuos</NavLink>
                     <NavLink href="/datos">Datos</NavLink>
+                    <NavLink href="/cobertura">Cobertura</NavLink>
+                    <NavLink href="/planilla">Planilla</NavLink>
                     <NavLink href="/analisis">Análisis</NavLink>
                     <span className="mx-1 h-5 w-px bg-line" aria-hidden />
                   </>

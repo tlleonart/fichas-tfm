@@ -143,8 +143,37 @@ Funciones **puras** y única fuente de verdad del cálculo:
 /individuos/[id]          Detalle + comparación por individuo
 /individuos/[id]/zonacion Ficha de Zonación (crear/editar)
 /individuos/[id]/eat      Ficha de EAT (crear/editar)
+/individuos/[id]/editar   Edición de la identidad del individuo
+/datos                    Dashboard de datos (filtros + export crudo/maestra)
+/cobertura                Cobertura de costillas y vértebras (vacíos por individuo y sitio)
+/planilla                 Planilla de totales de ambos métodos (individuo y sitio)
 /analisis                 Comparación población/total
+/docs                     Documentación renderizada
 ```
+
+### 5.1.1 Cobertura y planilla (`convex/cobertura.ts`)
+Una sola query de **solo lectura** (`cobertura:cobertura`) alimenta las dos vistas. No
+recalcula métricas: lee las `metricas` ya guardadas (`lib/metrics.ts` sigue siendo la
+única fuente de verdad) y solo cuenta las marcas crudas de los grupos costillas y
+vértebras, que no están desagregadas en `metricas`.
+
+- **`/cobertura`** — individuos sin ninguna marca cargada en costillas, en vértebras o en
+  ambos, con su sitio y sus valores totales (completitud, IPO, ICH, EAT).
+- **`/planilla`** — totales de los dos métodos por individuo y agregados por sitio
+  (media ± DE, mediana, mín/máx y agregado sobre sumas), más fila TOTAL.
+
+Dos advertencias metodológicas que las vistas explicitan:
+
+1. **"Sin información" = cero marcas cargadas.** Los formularios persisten solo casillas
+   tildadas, así que en la base *no se distingue* "el hueso no se preservó" de "el hueso no
+   se registró". Lo que sí discrimina es la **discrepancia entre métodos** (un grupo
+   presente en un método y vacío en el otro ⇒ casi seguro un vacío de registro).
+2. **Los denominadores difieren.** Zonación: costillas 72 zonas, vértebras 96 zonas, y el
+   **sacro es un elemento aparte** (4 zonas). EAT: costillas 24, vértebras 32 — y ahí el
+   sacro y el cóccix van *dentro* de vértebras. No son comparables uno a uno.
+
+El **EAT de un sitio** se reporta como media/mediana de los EAT individuales. No se aplica
+`EAT = 100 − (IPO×ICH)/100` sobre promedios: la fórmula está definida por individuo.
 
 ### 5.2 Sistema de diseño (`globals.css`)
 - Tokens CSS en `:root` y `.dark` (canvas, surface, ink, muted, faint, line, accent…),

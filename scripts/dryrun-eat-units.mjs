@@ -38,7 +38,6 @@ import {
   MANO_TOTAL_BONES,
   PIE_TOTAL_BONES,
 } from "../convex/lib/eatUnits.ts";
-import { computeEAT } from "../convex/lib/metrics.ts";
 
 const snapshotDir = process.argv[2];
 const csvRef = process.argv[3];
@@ -58,7 +57,7 @@ const fichas = readJsonl(path.join(snapshotDir, "fichas", "documents.jsonl"));
 const individuos = readJsonl(path.join(snapshotDir, "individuos", "documents.jsonl"));
 const codigoPorId = new Map(individuos.map((i) => [i._id, i.codigoCanonico]));
 
-/* ───────────────────────── partición ESTRICTA de referencia (SDD §3.2) ───── */
+/* ─────────────────────────────── helpers numéricos ───────────────────────── */
 
 const n_ = (v) => {
   const n = typeof v === "number" ? v : parseFloat(String(v));
@@ -66,6 +65,64 @@ const n_ = (v) => {
 };
 const cnt = (o) => (o && typeof o === "object" ? Object.values(o).filter(Boolean).length : 0);
 const term = (v, max) => Math.min(1, n_(v) / max);
+
+/* ───────────── partición VIEJA, inline (CONTROL contra `metricas` de la DB) ─────
+ * Antes se importaba `computeEAT` de `lib/metrics.ts`, que tenía la partición
+ * vieja. Desde 2026-08-02 `lib/metrics.ts` está en la partición ESTRICTA
+ * (EAT_UNIT_PARTITION_VERSION = 2), así que el control se congela ACÁ: es la
+ * partición que produjo los números que hoy están persistidos en la DB, y sirve
+ * para verificar que el harness reproduce la DB bit a bit. NO tocar.
+ */
+function handPointsLegacy(h) {
+  if (!h || typeof h !== "object") return 0;
+  return term(h.carpianos, 8) + term(h.metacarpianos, 5) + term(h.falProxMedias, 9) + term(h.falDistales, 5);
+}
+function footPointsLegacy(f) {
+  if (!f || typeof f !== "object") return 0;
+  return (
+    term(f.tarsianos, 7) +
+    term(f.metatarsianos, 5) +
+    term(f.falProx, 5) +
+    term(f.falMedias, 4) +
+    term(f.falDistales, 5)
+  );
+}
+/** Réplica exacta del `computeEAT` pre-2026-08 (partición vieja + ICH sin hardening). */
+function computeEAT(data) {
+  const totalPresent =
+    cnt(data.craneo) +
+    cnt(data.vertebras) +
+    cnt(data.huesosLargos) +
+    cnt(data.huesosPlanos) +
+    cnt(data.costillas) +
+    (data.mandibula ? 1 : 0) +
+    (data.hioides ? 1 : 0) +
+    handPointsLegacy(data.manoDer) +
+    handPointsLegacy(data.manoIzq) +
+    footPointsLegacy(data.pieDer) +
+    footPointsLegacy(data.pieIzq);
+  const ipo = (totalPresent / 115) * 100;
+  const sumaGenerica = (o) => (o && typeof o === "object" ? Object.values(o).reduce((a, v) => a + n_(v), 0) : 0);
+  const presence = {
+    craneo: cnt(data.craneo),
+    vertebras: cnt(data.vertebras),
+    huesosLargos: cnt(data.huesosLargos),
+    huesosPlanos: cnt(data.huesosPlanos),
+    costillas: cnt(data.costillas),
+    mandibula: data.mandibula ? 1 : 0,
+    hioides: data.hioides ? 1 : 0,
+    manos: sumaGenerica(data.manoDer) + sumaGenerica(data.manoIzq),
+    pies: sumaGenerica(data.pieDer) + sumaGenerica(data.pieIzq),
+  };
+  const quality = data.quality ?? {};
+  const present = Object.keys(presence).filter((k) => presence[k] > 0);
+  const ich = present.length === 0 ? 0 : present.reduce((a, k) => a + n_((quality[k] ?? {}).value), 0) / present.length;
+  const eat = 100 - (ipo * ich) / 100;
+  const r = (n) => Math.round(n * 100) / 100;
+  return { ipo: r(ipo), ich: r(ich), eat: r(eat), totalPresent: r(totalPresent) };
+}
+
+/* ───────────────────────── partición ESTRICTA de referencia (SDD §3.2) ─────── */
 
 /** Mano — 4 U.A.: carpianos/8 + metacarpianos/5 + falProximales/5 + (medias+distales)/9 */
 function handPointsStrict(h) {

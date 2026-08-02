@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p convex/tsconfig.json",
+    "test": "node --experimental-strip-types --import ./tests/register-ts.mjs --test \"tests/*.test.mjs\"",
+    "test:coverage": "node --experimental-strip-types --import ./tests/register-ts.mjs --test --experimental-test-coverage \"tests/*.test.mjs\"",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage"
   },
   "dependencies": {
     "convex": "^1.40.0",

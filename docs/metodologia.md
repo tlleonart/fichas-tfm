@@ -67,7 +67,8 @@ lado (Izq/Der). Es la base para cuantificar fragmentación y representación.
 > 14 zonas previo contaba la sínfisis dos veces (`mand_7_L` y `mand_7_R` para una estructura
 > medial única). Por ahora se adopta la Opción A (7 zonas-tipo + observación de lateralidad)
 > por comparabilidad del denominador; la propuesta de 13 queda documentada para una iteración
-> posterior. (Ver también `sources/VALIDACION-METODOLOGICA.md`.)
+> posterior. *(Registro de validación contra las fuentes primarias: documento interno del
+> proyecto, fuera de este repositorio.)*
 
 ### 2.2 Métricas derivadas
 - **Completitud global** = zonas presentes / 635 × 100. Las falanges de mano y pie se
@@ -100,8 +101,9 @@ calidad — clave para comunicar la fiabilidad de las conclusiones. Combina un �
 
 > **Nota terminológica — «IPO» e «ICH» no son acrónimos de los autores.** El artículo de
 > Serrulla & Vázquez (2019) abrevia únicamente «EAT»; nunca escribe «IPO» ni «ICH». Ambas
-> siglas provienen de **TCA Arqueología (2021)** (ref. 7) y se adoptan acá como
-> **convención de uso posterior**, por comodidad expositiva. No deben atribuirse a los
+> siglas están atestiguadas en **TCA Arqueología (2021: 32)** (ref. 7), que las usa
+> atribuyendo el método explícitamente a Serrulla y Vázquez (2019). Se adoptan acá como
+> **convención de uso posterior**, por comodidad expositiva; no deben atribuirse a los
 > autores del método.
 
 ### 3.1 Componentes
@@ -176,8 +178,9 @@ igual. Lo que se corrigió es **qué hueso entra en qué unidad**, no el total.
 >
 > El chequeo agregado no lo detectaba porque **ambas particiones dan la misma cantidad de
 > unidades y el mismo máximo por extremidad**; lo que difería era el reparto interno. Por eso
-> `sources/VALIDACION-METODOLOGICA.md` había declarado el EAT «todo verificado» por error;
-> la corrección está registrada en su **§A.1** (hallazgo 2026-08-01). La partición fiel se
+> el registro de validación contra las fuentes primarias — *documento interno del proyecto,
+> fuera de este repositorio* — había declarado el EAT «todo verificado» por error; la
+> corrección quedó registrada ahí en su **§A.1** (hallazgo 2026-08-01). La partición fiel se
 > desplegó el **2026-08-02** y el histórico se migró.
 
 El contrato de campos (nombres de clave, máximos, a qué unidad aporta cada uno) es único y
@@ -278,6 +281,11 @@ objetiva.
    preservation of human skeletal remains.* Am J Phys Anthropol 76, 183–188.
    → **Origen del denominador 115 del IPO**, declarado por Serrulla & Vázquez en su planilla
    de cálculo (§3.1).
-7. TCA Arqueología (2021). Documentación de aplicación del EAT. → **Origen de los acrónimos
-   «IPO» e «ICH»**, que el artículo de Serrulla & Vázquez no usa (§3, nota terminológica y
-   §3.4 punto 4).
+7. TCA Arqueología (2021). *Memoria. Indagación, localización y delimitación de fosa común en
+   el Cementerio Municipal de Alcalá de Guadaíra (Sevilla).* Junta de Andalucía, octubre de
+   2021, p. 32.
+   [Memoria (PDF)](https://www.juntadeandalucia.es/sites/default/files/inline-files/2023/03/Memoria%20Actuaciones%20Cementerio%20Alcal%C3%A1%20de%20Guada%C3%ADra%20(Sevilla)%20Octubre%202021.pdf)
+   → Literatura gris institucional. **Origen atestiguado de los acrónimos «IPO», «ICH» y
+   «EAT»** (p. 32), con atribución explícita del método a Serrulla y Vázquez (2019) — el
+   artículo original solo abrevia «EAT» (§3, nota terminológica, y §3.4 punto 4). Confirma
+   además, de forma independiente, el rango de páginas **46–51** de la ref. 2.

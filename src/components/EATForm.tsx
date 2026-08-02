@@ -1,6 +1,33 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { Fragment, useState, useMemo, useCallback } from "react";
+import {
+  MANO_MAX_PTS,
+  MANO_ROWS,
+  MANO_TOTAL_BONES,
+  MANO_UNITS,
+  PIE_MAX_PTS,
+  PIE_ROWS,
+  PIE_TOTAL_BONES,
+  PIE_UNITS,
+  buildEatData,
+  clampCount,
+  fmtPts,
+  footBoneTotal,
+  footPreviewPoints,
+  handBoneTotal,
+  handPreviewPoints,
+  hydrateMano,
+  hydratePie,
+  presenceCounts,
+  previewMetrics,
+  unitPoints,
+  type EatInputRow,
+  type EatUnitSpec,
+  type ManoData,
+  type PieData,
+  type QualityEntry,
+} from "@/lib/eatPreview";
 
 /* ------------------------------------------------------------------ */
 /*  Constants & bone definitions                                       */
@@ -62,24 +89,12 @@ const HUESOS_PLANOS = [
 
 const COSTILLAS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
-const MANO_UNITS = [
-  { key: "carpianos", label: "Carpianos", max: 8 },
-  { key: "metacarpianos", label: "Metacarpianos", max: 5 },
-  { key: "falProxMedias", label: "Fal. prox + medias", max: 9 },
-  { key: "falDistales", label: "Fal. distales", max: 5 },
-] as const;
-const MANO_TOTAL_BONES = 27;
-const MANO_MAX_PTS = 4;
-
-const PIE_UNITS = [
-  { key: "tarsianos", label: "Tarsianos", max: 7 },
-  { key: "metatarsianos", label: "Metatarsianos", max: 5 },
-  { key: "falProx", label: "Fal. prox", max: 5 },
-  { key: "falMedias", label: "Fal. medias", max: 4 },
-  { key: "falDistales", label: "Fal. distales", max: 5 },
-] as const;
-const PIE_TOTAL_BONES = 26;
-const PIE_MAX_PTS = 5;
+/*
+ * Manos y pies: las filas de captura, las unidades anatómicas de puntuación y los
+ * totales salen de `@/lib/eatPreview`, que los DERIVA del contrato
+ * (`convex/lib/eatUnits.ts`). Acá no se hardcodea ninguna clave ni denominador:
+ * mano = 5 inputs → 4 U.A. (máx 4 pts) · pie = 7 inputs → 5 U.A. (máx 5 pts).
+ */
 
 /* Quality groups (ICH) - mapped to the inventory groups */
 const QUALITY_GROUPS = [
@@ -99,31 +114,53 @@ const QUALITY_GROUPS = [
 /* ------------------------------------------------------------------ */
 
 interface EATFormProps {
-  initialData?: Record<string, any>;   // the saved `data` blob (method-specific keys)
+  initialData?: Record<string, unknown>;   // the saved `data` blob (method-specific keys)
   registrador?: string;
   fechaRegistro?: string;
   saving?: boolean;
-  onSave: (payload: { registrador: string; fechaRegistro: string; data: Record<string, any> }) => Promise<void>;
+  onSave: (payload: { registrador: string; fechaRegistro: string; data: Record<string, unknown> }) => Promise<void>;
 }
 
-interface ManoData {
-  carpianos: number;
-  metacarpianos: number;
-  falProxMedias: number;
-  falDistales: number;
+/* ------------------------------------------------------------------ */
+/*  Lectores del `data` guardado (`v.any()` en Convex → llega unknown)  */
+/* ------------------------------------------------------------------ */
+
+/** Mapa de presencia guardado → `Record<string, boolean>`. */
+function asBoolMap(v: unknown): Record<string, boolean> {
+  if (!v || typeof v !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(v as Record<string, unknown>).map(([k, val]) => [k, Boolean(val)]),
+  );
 }
 
-interface PieData {
-  tarsianos: number;
-  metatarsianos: number;
-  falProx: number;
-  falMedias: number;
-  falDistales: number;
+function asString(v: unknown): string {
+  return typeof v === "string" ? v : "";
 }
 
-interface QualityEntry {
-  value: number;
-  obs: string;
+/**
+ * `data.quality` guardado → estado del formulario.
+ *
+ * 🔒 NO fabrica valores: si un grupo no tiene `value` registrado, sigue sin
+ * tenerlo (el ICH lo excluye del promedio). Y un `value = 0` se conserva como
+ * `0`, que es una observación válida de calidad nula (SDD §5bis.2).
+ */
+function asQuality(
+  v: unknown,
+  fallback: Record<string, QualityEntry>,
+): Record<string, QualityEntry> {
+  if (!v || typeof v !== "object") return fallback;
+  const out: Record<string, QualityEntry> = {};
+  for (const [k, entry] of Object.entries(v as Record<string, unknown>)) {
+    const e = (entry && typeof entry === "object" ? entry : {}) as Record<string, unknown>;
+    const raw = e.value;
+    const n = typeof raw === "number" ? raw : parseFloat(String(raw));
+    out[k] = {
+      // `undefined` se PRESERVA como `undefined` (no observado ≠ calidad 0).
+      ...(Number.isFinite(n) ? { value: n } : {}),
+      obs: asString(e.obs),
+    };
+  }
+  return out;
 }
 
 /* ------------------------------------------------------------------ */
@@ -135,11 +172,14 @@ function Section({
   subtitle,
   children,
   defaultOpen = true,
+  testId,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  /** Ancla estable para los E2E (el título y el subtítulo cambian con los datos). */
+  testId?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -147,6 +187,7 @@ function Section({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        data-testid={testId ? `section-${testId}` : undefined}
         className="w-full flex items-center justify-between px-4 py-3 bg-surface-2 hover:bg-surface-2 transition text-left"
       >
         <div>
@@ -268,46 +309,47 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
   const [fechaRegistro, setFechaRegistro] = useState(fechaRegistroProp ?? "");
 
   /* ---------- Bone Inventory (IPO) ---------- */
-  const [craneoChecked, setCraneoChecked] = useState<Record<string, boolean>>(
-    initialData?.craneo ?? {}
+  const [craneoChecked, setCraneoChecked] = useState<Record<string, boolean>>(() =>
+    asBoolMap(initialData?.craneo)
   );
-  const [vertebrasChecked, setVertebrasChecked] = useState<Record<string, boolean>>(
-    initialData?.vertebras ?? {}
+  const [vertebrasChecked, setVertebrasChecked] = useState<Record<string, boolean>>(() =>
+    asBoolMap(initialData?.vertebras)
   );
-  const [largosChecked, setLargosChecked] = useState<Record<string, boolean>>(
-    initialData?.huesosLargos ?? {}
+  const [largosChecked, setLargosChecked] = useState<Record<string, boolean>>(() =>
+    asBoolMap(initialData?.huesosLargos)
   );
-  const [planosChecked, setPlanosChecked] = useState<Record<string, boolean>>(
-    initialData?.huesosPlanos ?? {}
+  const [planosChecked, setPlanosChecked] = useState<Record<string, boolean>>(() =>
+    asBoolMap(initialData?.huesosPlanos)
   );
-  const [costillasChecked, setCostillasChecked] = useState<Record<string, boolean>>(
-    initialData?.costillas ?? {}
+  const [costillasChecked, setCostillasChecked] = useState<Record<string, boolean>>(() =>
+    asBoolMap(initialData?.costillas)
   );
-  const [mandibula, setMandibula] = useState<boolean>(
-    initialData?.mandibula ?? false
-  );
-  const [hioides, setHioides] = useState<boolean>(
-    initialData?.hioides ?? false
-  );
+  const [mandibula, setMandibula] = useState<boolean>(Boolean(initialData?.mandibula));
+  const [hioides, setHioides] = useState<boolean>(Boolean(initialData?.hioides));
 
-  const emptyMano: ManoData = { carpianos: 0, metacarpianos: 0, falProxMedias: 0, falDistales: 0 };
-  const [manoDer, setManoDer] = useState<ManoData>(initialData?.manoDer ?? { ...emptyMano });
-  const [manoIzq, setManoIzq] = useState<ManoData>(initialData?.manoIzq ?? { ...emptyMano });
-
-  const emptyPie: PieData = { tarsianos: 0, metatarsianos: 0, falProx: 0, falMedias: 0, falDistales: 0 };
-  const [pieDer, setPieDer] = useState<PieData>(initialData?.pieDer ?? { ...emptyPie });
-  const [pieIzq, setPieIzq] = useState<PieData>(initialData?.pieIzq ?? { ...emptyPie });
+  /*
+   * Manos y pies: `hydrateMano`/`hydratePie` abren tanto una ficha ya migrada
+   * (claves granulares) como una SIN migrar (solo `falProxMedias`/`tarsianos`),
+   * derivando en ese caso con las funciones del contrato. El backfill del
+   * histórico corre DESPUÉS de que este formulario esté en prod (SDD §5bis.1).
+   */
+  const [manoDer, setManoDer] = useState<ManoData>(() => hydrateMano(initialData?.manoDer));
+  const [manoIzq, setManoIzq] = useState<ManoData>(() => hydrateMano(initialData?.manoIzq));
+  const [pieDer, setPieDer] = useState<PieData>(() => hydratePie(initialData?.pieDer));
+  const [pieIzq, setPieIzq] = useState<PieData>(() => hydratePie(initialData?.pieIzq));
 
   /* ---------- Bone Quality (ICH) ---------- */
-  const emptyQuality: Record<string, QualityEntry> = Object.fromEntries(
-    QUALITY_GROUPS.map((g) => [g.key, { value: 0, obs: "" }])
-  );
-  const [quality, setQuality] = useState<Record<string, QualityEntry>>(
-    initialData?.quality ?? emptyQuality
+  /* 🔒 Default `value: 0` para los 9 grupos — NO cambiar a `undefined`: movería el
+     ICH de las 60 fichas históricas (handoff §3 punto 5 / SDD §5bis.2). */
+  const [quality, setQuality] = useState<Record<string, QualityEntry>>(() =>
+    asQuality(
+      initialData?.quality,
+      Object.fromEntries(QUALITY_GROUPS.map((g) => [g.key, { value: 0, obs: "" }])),
+    )
   );
 
   /* ---------- Observations ---------- */
-  const [observations, setObservations] = useState(initialData?.observations ?? "");
+  const [observations, setObservations] = useState(() => asString(initialData?.observations));
 
   /* ================================================================ */
   /*  Derived / computed values                                        */
@@ -332,88 +374,60 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
     []
   );
 
-  /* Mano weighted points */
-  const manoDerTotal = useMemo(
-    () => manoDer.carpianos + manoDer.metacarpianos + manoDer.falProxMedias + manoDer.falDistales,
-    [manoDer]
-  );
-  const manoIzqTotal = useMemo(
-    () => manoIzq.carpianos + manoIzq.metacarpianos + manoIzq.falProxMedias + manoIzq.falDistales,
-    [manoIzq]
-  );
-  /* hand (max 4 pts): carpianos/8 + metacarpianos/5 + falProxMedias/9 + falDistales/5 */
-  const handPts = (m: ManoData) =>
-    Math.min(1, m.carpianos / 8) +
-    Math.min(1, m.metacarpianos / 5) +
-    Math.min(1, m.falProxMedias / 9) +
-    Math.min(1, m.falDistales / 5);
-  const manoDerPts = useMemo(() => handPts(manoDer), [manoDer]);
-  const manoIzqPts = useMemo(() => handPts(manoIzq), [manoIzq]);
+  /*
+   * Huesos presentes por lado. Usa las allowlists del contrato
+   * (`handBoneTotal`/`footBoneTotal`): ⚠️ sumar `Object.values(manoDer)` genérico
+   * duplicaría los huesos si algún día vuelve a convivir el espejo legacy.
+   */
+  const manoDerTotal = useMemo(() => handBoneTotal(manoDer), [manoDer]);
+  const manoIzqTotal = useMemo(() => handBoneTotal(manoIzq), [manoIzq]);
+  const pieDerTotal = useMemo(() => footBoneTotal(pieDer), [pieDer]);
+  const pieIzqTotal = useMemo(() => footBoneTotal(pieIzq), [pieIzq]);
 
-  /* Pie weighted points */
-  const pieDerTotal = useMemo(
-    () => pieDer.tarsianos + pieDer.metatarsianos + pieDer.falProx + pieDer.falMedias + pieDer.falDistales,
-    [pieDer]
-  );
-  const pieIzqTotal = useMemo(
-    () => pieIzq.tarsianos + pieIzq.metatarsianos + pieIzq.falProx + pieIzq.falMedias + pieIzq.falDistales,
-    [pieIzq]
-  );
-  /* foot (max 5 pts): tarsianos/7 + metatarsianos/5 + falProx/5 + falMedias/4 + falDistales/5 */
-  const footPts = (p: PieData) =>
-    Math.min(1, p.tarsianos / 7) +
-    Math.min(1, p.metatarsianos / 5) +
-    Math.min(1, p.falProx / 5) +
-    Math.min(1, p.falMedias / 4) +
-    Math.min(1, p.falDistales / 5);
-  const pieDerPts = useMemo(() => footPts(pieDer), [pieDer]);
-  const pieIzqPts = useMemo(() => footPts(pieIzq), [pieIzq]);
+  /* Puntos ponderados por lado (mano máx 4, pie máx 5) — partición estricta. */
+  const manoDerPts = useMemo(() => handPreviewPoints(manoDer), [manoDer]);
+  const manoIzqPts = useMemo(() => handPreviewPoints(manoIzq), [manoIzq]);
+  const pieDerPts = useMemo(() => footPreviewPoints(pieDer), [pieDer]);
+  const pieIzqPts = useMemo(() => footPreviewPoints(pieIzq), [pieIzq]);
 
-  /* Group present counts (for quality gating) */
-  const groupCounts = useMemo(
+  /*
+   * Estado completo del formulario → `data` de la ficha. Es EL MISMO objeto que
+   * se manda al guardar, así que el preview de abajo se calcula sobre exactamente
+   * lo que se persiste.
+   */
+  const formState = useMemo(
     () => ({
-      craneo: countChecked(craneoChecked),
-      vertebras: countChecked(vertebrasChecked),
-      huesosLargos: countChecked(largosChecked),
-      huesosPlanos: countChecked(planosChecked),
-      costillas: countChecked(costillasChecked),
-      mandibula: mandibula ? 1 : 0,
-      hioides: hioides ? 1 : 0,
-      manos: manoDerTotal + manoIzqTotal,
-      pies: pieDerTotal + pieIzqTotal,
+      craneo: craneoChecked,
+      vertebras: vertebrasChecked,
+      huesosLargos: largosChecked,
+      huesosPlanos: planosChecked,
+      costillas: costillasChecked,
+      mandibula,
+      hioides,
+      manoDer,
+      manoIzq,
+      pieDer,
+      pieIzq,
+      quality,
+      observations,
     }),
-    [craneoChecked, vertebrasChecked, largosChecked, planosChecked, costillasChecked, mandibula, hioides, manoDerTotal, manoIzqTotal, pieDerTotal, pieIzqTotal]
+    [craneoChecked, vertebrasChecked, largosChecked, planosChecked, costillasChecked, mandibula, hioides, manoDer, manoIzq, pieDer, pieIzq, quality, observations]
   );
 
-  /* Total present bones (simple checkboxes count as 1 each; manos/pies use weighted pts) */
-  const totalPresent = useMemo(() => {
-    const simple =
-      groupCounts.craneo +
-      groupCounts.vertebras +
-      groupCounts.huesosLargos +
-      groupCounts.huesosPlanos +
-      groupCounts.costillas +
-      groupCounts.mandibula +
-      groupCounts.hioides;
-    const weighted = manoDerPts + manoIzqPts + pieDerPts + pieIzqPts;
-    return simple + weighted;
-  }, [groupCounts, manoDerPts, manoIzqPts, pieDerPts, pieIzqPts]);
+  /* Group present counts (for quality gating) — mismo criterio que el backend. */
+  const groupCounts = useMemo(() => presenceCounts(formState), [formState]);
 
-  /* Max possible = 18 + 32 + 14 + 7 + 24 + 1 + 1 + 8 + 10 = 115 */
-  const IPO = useMemo(() => (totalPresent / 115) * 100, [totalPresent]);
-
-  /* ICH = average quality of groups that have bones */
-  const ICH = useMemo(() => {
-    const filled = QUALITY_GROUPS.filter(
-      (g) => groupCounts[g.key as keyof typeof groupCounts] > 0
-    );
-    if (filled.length === 0) return 0;
-    const sum = filled.reduce((acc, g) => acc + (quality[g.key]?.value ?? 0), 0);
-    return sum / filled.length;
-  }, [quality, groupCounts]);
-
-  /* EAT = 100 - (IPO * ICH) / 100 */
-  const EAT = useMemo(() => 100 - (IPO * ICH) / 100, [IPO, ICH]);
+  /*
+   * 🔒 Invariante #2: el backend recalcula las métricas al guardar. Para que el
+   * preview NO pueda divergir de lo persistido, acá se llama a `computeEAT()`, la
+   * MISMA función de `convex/lib/metrics.ts` que corre `fichas.crear/actualizar`.
+   * Nada de fórmulas duplicadas en el front.
+   */
+  const metrics = useMemo(() => previewMetrics(buildEatData(formState)), [formState]);
+  const totalPresent = metrics.totalPresent;
+  const IPO = metrics.ipo;
+  const ICH = metrics.ich;
+  const EAT = metrics.eat;
 
   const eatColor = useMemo(() => {
     if (EAT <= 20) return "bg-green-500";
@@ -464,32 +478,10 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
   /* ---- Submit ---- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({
-      registrador,
-      fechaRegistro,
-      data: {
-        craneo: craneoChecked,
-        vertebras: vertebrasChecked,
-        huesosLargos: largosChecked,
-        huesosPlanos: planosChecked,
-        costillas: costillasChecked,
-        mandibula,
-        hioides,
-        manoDer,
-        manoIzq,
-        pieDer,
-        pieIzq,
-        quality,
-        observations,
-        /* Computed results stored for later reference */
-        _computed: {
-          totalPresent: +totalPresent.toFixed(2),
-          IPO: +IPO.toFixed(2),
-          ICH: +ICH.toFixed(2),
-          EAT: +EAT.toFixed(2),
-        },
-      },
-    });
+    /* `buildEatData` es la única armadora del payload: emite solo las claves
+       autoritativas (nunca `falProxMedias`/`tarsianos`, que reescribe el backend)
+       y no toca `quality` (los `0` viajan como `0`). */
+    await onSave({ registrador, fechaRegistro, data: buildEatData(formState) });
   };
 
   /* ================================================================ */
@@ -514,10 +506,59 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
     </div>
   );
 
-  /* Mano / Pie number input table */
+  /**
+   * Celda de captura de un hueso. `max === 1` (calcáneo, astrágalo) → checkbox:
+   * es UN hueso por lado, no un conteo (handoff §2.2). Resto → spinner clampeado.
+   */
+  const renderBoneCell = (
+    prefix: string,
+    side: "der" | "izq",
+    row: EatInputRow,
+    value: number,
+    onUpdate: (side: "der" | "izq", field: string, val: number) => void
+  ) => {
+    const testId = `${prefix}-${side}-${row.key}`;
+    if (row.kind === "checkbox") {
+      return (
+        <label className="tap-cell" aria-label={`${row.label} — ${side === "der" ? "derecho" : "izquierdo"}`}>
+          <input
+            type="checkbox"
+            className="tap-check"
+            data-testid={testId}
+            checked={value >= 1}
+            onChange={(e) => onUpdate(side, row.key, e.target.checked ? 1 : 0)}
+          />
+        </label>
+      );
+    }
+    return (
+      <input
+        type="number"
+        inputMode="numeric"
+        min={0}
+        max={row.max}
+        data-testid={testId}
+        aria-label={`${row.label} — ${side === "der" ? "derecho" : "izquierdo"} (0 a ${row.max})`}
+        value={value}
+        onChange={(e) => onUpdate(side, row.key, clampCount(e.target.value, row.max))}
+        className="w-16 min-h-11 border border-line-strong rounded text-center py-1 focus:ring-2 focus:ring-accent focus:outline-none"
+      />
+    );
+  };
+
+  /**
+   * Tabla de captura de una extremidad, AGRUPADA por unidad anatómica.
+   *
+   * Cada unidad abre con una banda que dice cuál es (`U.A.n`), sobre qué denominador
+   * puntúa en la fuente y cuántos puntos aporta hoy por lado — así se lee de un
+   * vistazo qué input pertenece a qué unidad, que es lo que se complica al pasar de
+   * 4 a 5 inputs por mano y de 5 a 7 por pie.
+   */
   const renderExtremityTable = (
+    prefix: string,
     label: string,
-    units: readonly { key: string; label: string; max: number }[],
+    units: readonly EatUnitSpec[],
+    rows: readonly EatInputRow[],
     derData: Record<string, number>,
     izqData: Record<string, number>,
     derTotal: number,
@@ -534,7 +575,7 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
         <table className="w-full text-sm border border-line rounded">
           <thead className="bg-surface-2">
             <tr>
-              <th className="text-left px-2 py-1 border-b">Unidad</th>
+              <th className="text-left px-2 py-1 border-b">Hueso</th>
               <th className="text-center px-2 py-1 border-b">Max</th>
               <th className="text-center px-2 py-1 border-b">Derecho</th>
               <th className="text-center px-2 py-1 border-b">Izquierdo</th>
@@ -542,48 +583,56 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
           </thead>
           <tbody>
             {units.map((u) => (
-              <tr key={u.key} className="border-b border-line">
-                <td className="px-2 py-1">{u.label}</td>
-                <td className="text-center px-2 py-1 text-faint">/{u.max}</td>
-                <td className="text-center px-2 py-1">
-                  <input
-                    type="number"
-                    min={0}
-                    max={u.max}
-                    value={derData[u.key] ?? 0}
-                    onChange={(e) =>
-                      onUpdate("der", u.key, Math.min(u.max, Math.max(0, +e.target.value || 0)))
-                    }
-                    className="w-14 border border-line-strong rounded text-center py-0.5 focus:ring-2 focus:ring-accent focus:outline-none"
-                  />
-                </td>
-                <td className="text-center px-2 py-1">
-                  <input
-                    type="number"
-                    min={0}
-                    max={u.max}
-                    value={izqData[u.key] ?? 0}
-                    onChange={(e) =>
-                      onUpdate("izq", u.key, Math.min(u.max, Math.max(0, +e.target.value || 0)))
-                    }
-                    className="w-14 border border-line-strong rounded text-center py-0.5 focus:ring-2 focus:ring-accent focus:outline-none"
-                  />
-                </td>
-              </tr>
+              <Fragment key={u.unit}>
+                <tr className="border-b border-line bg-surface-2">
+                  <td colSpan={4} className="px-2 py-1.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="pill pill-accent">U.A.{u.unit}</span>
+                      <span className="text-xs font-semibold text-muted">{u.label}</span>
+                      <span className="text-xs text-faint">puntúa sobre {u.denominator}</span>
+                      <span
+                        className="text-xs font-semibold text-accent"
+                        data-testid={`${prefix}-u${u.unit}-pts`}
+                      >
+                        D {fmtPts(unitPoints(derData, u))} · I {fmtPts(unitPoints(izqData, u))} pts
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                {rows
+                  .filter((r) => r.unit === u.unit)
+                  .map((r) => (
+                    <tr key={r.key} className="border-b border-line">
+                      <td className="px-2 py-1 pl-4">
+                        <span>{r.label}</span>
+                        {r.hint && (
+                          <span className="block text-xs text-faint">({r.hint})</span>
+                        )}
+                      </td>
+                      <td className="text-center px-2 py-1 text-faint">/{r.max}</td>
+                      <td className="text-center px-1 py-1">
+                        {renderBoneCell(prefix, "der", r, derData[r.key] ?? 0, onUpdate)}
+                      </td>
+                      <td className="text-center px-1 py-1">
+                        {renderBoneCell(prefix, "izq", r, izqData[r.key] ?? 0, onUpdate)}
+                      </td>
+                    </tr>
+                  ))}
+              </Fragment>
             ))}
           </tbody>
           <tfoot className="bg-surface-2 font-medium">
             <tr>
               <td className="px-2 py-1">Total huesos</td>
               <td className="text-center px-2 py-1">/{totalBones}</td>
-              <td className="text-center px-2 py-1">{derTotal}</td>
-              <td className="text-center px-2 py-1">{izqTotal}</td>
+              <td className="text-center px-2 py-1" data-testid={`${prefix}-der-total`}>{derTotal}</td>
+              <td className="text-center px-2 py-1" data-testid={`${prefix}-izq-total`}>{izqTotal}</td>
             </tr>
             <tr>
               <td className="px-2 py-1">Puntos ponderados</td>
               <td className="text-center px-2 py-1">/{maxPts}</td>
-              <td className="text-center px-2 py-1">{derPts.toFixed(2)}</td>
-              <td className="text-center px-2 py-1">{izqPts.toFixed(2)}</td>
+              <td className="text-center px-2 py-1" data-testid={`${prefix}-der-pts`}>{fmtPts(derPts)}</td>
+              <td className="text-center px-2 py-1" data-testid={`${prefix}-izq-pts`}>{fmtPts(izqPts)}</td>
             </tr>
           </tfoot>
         </table>
@@ -773,12 +822,15 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
         {/* Manos */}
         <Section
           title="Manos"
-          subtitle={`D: ${manoDerPts.toFixed(2)} + I: ${manoIzqPts.toFixed(2)} = ${(manoDerPts + manoIzqPts).toFixed(2)} / 8 pts`}
+          subtitle={`D: ${fmtPts(manoDerPts)} + I: ${fmtPts(manoIzqPts)} = ${fmtPts(manoDerPts + manoIzqPts)} / ${MANO_MAX_PTS * 2} pts`}
           defaultOpen={false}
+          testId="manos"
         >
           {renderExtremityTable(
-            "Manos (ponderación: max 4 pts por mano)",
+            "mano",
+            "Manos — 4 unidades anatómicas, máx 4 pts por mano",
             MANO_UNITS,
+            MANO_ROWS,
             manoDer as unknown as Record<string, number>,
             manoIzq as unknown as Record<string, number>,
             manoDerTotal,
@@ -794,12 +846,15 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
         {/* Pies */}
         <Section
           title="Pies"
-          subtitle={`D: ${pieDerPts.toFixed(2)} + I: ${pieIzqPts.toFixed(2)} = ${(pieDerPts + pieIzqPts).toFixed(2)} / 10 pts`}
+          subtitle={`D: ${fmtPts(pieDerPts)} + I: ${fmtPts(pieIzqPts)} = ${fmtPts(pieDerPts + pieIzqPts)} / ${PIE_MAX_PTS * 2} pts`}
           defaultOpen={false}
+          testId="pies"
         >
           {renderExtremityTable(
-            "Pies (ponderación: max 5 pts por pie)",
+            "pie",
+            "Pies — 5 unidades anatómicas, máx 5 pts por pie",
             PIE_UNITS,
+            PIE_ROWS,
             pieDer as unknown as Record<string, number>,
             pieIzq as unknown as Record<string, number>,
             pieDerTotal,
@@ -836,6 +891,7 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
       <Section
         title="3. Calidad del Hueso (ICH)"
         subtitle={`ICH = ${ICH.toFixed(1)}%`}
+        testId="ich"
       >
         <p className="text-sm text-faint mb-3">
           Para cada grupo que tenga huesos presentes, indique la calidad del hueso con el slider (0-100%) y, opcionalmente, una observaci&oacute;n.
@@ -851,7 +907,7 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-muted">{g.label}</span>
                   {hasPresence ? (
-                    <span className="text-sm font-bold text-ink">
+                    <span className="text-sm font-bold text-ink" data-testid={`quality-${g.key}-value`}>
                       {quality[g.key]?.value ?? 0}%
                     </span>
                   ) : (
@@ -865,6 +921,8 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
                       min={0}
                       max={100}
                       step={5}
+                      data-testid={`quality-${g.key}`}
+                      aria-label={`Calidad — ${g.label} (0 a 100%)`}
                       value={quality[g.key]?.value ?? 0}
                       onChange={(e) => updateQuality(g.key, "value", +e.target.value)}
                       className="w-full accent-accent"
@@ -914,15 +972,15 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
           <div className="grid sm:grid-cols-3 gap-4 text-sm">
             <div className="bg-accent-soft rounded-lg p-3">
               <p className="text-accent font-medium">IPO</p>
-              <p className="text-2xl font-bold text-accent">{IPO.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-accent" data-testid="ipo-value">{IPO.toFixed(1)}%</p>
             </div>
             <div className="bg-accent-soft rounded-lg p-3">
               <p className="text-accent font-medium">ICH</p>
-              <p className="text-2xl font-bold text-accent">{ICH.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-accent" data-testid="ich-value">{ICH.toFixed(1)}%</p>
             </div>
             <div className={`rounded-lg p-3 text-white ${eatColor}`}>
               <p className="font-medium opacity-90">EAT</p>
-              <p className="text-3xl font-bold">{EAT.toFixed(1)}%</p>
+              <p className="text-3xl font-bold" data-testid="eat-value">{EAT.toFixed(1)}%</p>
             </div>
           </div>
 

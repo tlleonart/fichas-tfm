@@ -1,6 +1,7 @@
 /**
  * Derived metrics for both recording methods.
- * Pure functions (no Convex imports) so they can be unit-tested and reused.
+ * Pure functions (only `./eatUnits`, no Convex imports) so they can be
+ * unit-tested offline and reused.
  *
  * IMPORTANT — EAT formula:
  *   The published worked example (Serrulla & Vázquez 2019, p.5: IPO 16%, ICH 80%
@@ -10,9 +11,16 @@
  *        EAT = 100 - (IPO * ICH) / 100
  *
  *   Manos/pies are weighted PER ANATOMICAL UNIT (each unit contributes equally,
- *   max 4 pts/hand and 5 pts/foot), matching the spreadsheet's per-unit ratios
- *   rather than raw bone counts.
+ *   max 4 pts/hand and 5 pts/foot). Which bone belongs to which unit is the
+ *   SOURCE's partition, not ours — see `EAT_UNIT_PARTITION_VERSION` below.
+ *
+ *   ⚠️ The previous version of this header claimed the per-unit weighting
+ *   "matched the spreadsheet's per-unit ratios". That was TRUE for the group
+ *   maxima (115) and FALSE for the internal partition of hand and foot, which
+ *   was inverted until 2026-08 (SDD §1, VALIDACION-METODOLOGICA §A.1).
  */
+
+import { footBoneCount, handBoneCount } from "./eatUnits";
 
 type Dict = Record<string, unknown> | undefined | null;
 
@@ -30,39 +38,101 @@ function num(v: unknown): number {
 /*  EAT — Estado de Afectación Tafonómica (Serrulla & Vázquez 2019)    */
 /* ================================================================== */
 
-/** Group maxima for the Index of Bone Preservation (IPO). Sum = 115. */
-const EAT_IPO_MAX = 115;
+/** Group maxima for the Index of Bone Preservation (IPO). Sum = 115. 🔒 No cambia. */
+export const EAT_IPO_MAX = 115;
 
-/** Hand split into 4 anatomical units (max 4 pts/hand). */
+/**
+ * Version of the hand/foot ANATOMICAL UNIT PARTITION implemented below.
+ *
+ *   1 = pre-2026-08 partition (hand: falProxMedias/9 + falDistales/5;
+ *       foot: tarsianos/7 + metatarsianos/5 + falProx/5 + falMedias/4 + falDistales/5).
+ *       Inverted with respect to the source — see SDD §1.
+ *   2 = STRICT partition of Serrulla & Vázquez (2019) — the one below.
+ *
+ * 🔒 `convex/migrations/eat_units_2026_08.ts` READS this constant and REFUSES to
+ * run with `apply: true` while it is `< 2`, so nobody can persist `metricas`
+ * computed with the old partition. Do not remove or rename it.
+ */
+export const EAT_UNIT_PARTITION_VERSION = 2;
+
+/** Coeficiente de una unidad anatómica: presentes / total de la unidad, capado en 1. */
+const unitTerm = (v: unknown, max: number) => Math.min(1, num(v) / max);
+
+/**
+ * MANO — 4 unidades anatómicas, máx 4 pts/mano (Serrulla & Vázquez 2019,
+ * diagrama coloreado de la planilla; evidencia en VALIDACION-METODOLOGICA §A.1).
+ *
+ *   U.A.1  carpianos                    /8
+ *   U.A.2  metacarpianos                /5
+ *   U.A.3  falProximales                /5   ← proximales SOLAS (verde del diagrama)
+ *   U.A.4  falMedias + falDistales      /9   ← todo lo distal a las proximales (amarillo)
+ *
+ * Confirmación aritmética independiente: los coeficientes del Gráfico 3 son
+ * 0,40 = 2/5 (U.A.3) y 0,22 = 2/9 (U.A.4); con denominador 9 en U.A.3 el 0,40
+ * exigiría 3,6/9, que no es un número entero de huesos.
+ *
+ * ⚠️ Lee SOLO las claves granulares (`falProximales`, `falMedias`): el espejo
+ * legacy `falProxMedias` NO se lee más. Los datos llegan siempre normalizados por
+ * `normalizeEatUnits` (mutations + migración), que las deriva si faltan.
+ */
 function handPoints(h: Dict): number {
   if (!h || typeof h !== "object") return 0;
   const d = h as Record<string, unknown>;
-  const term = (v: unknown, max: number) => Math.min(1, num(v) / max);
   return (
-    term(d.carpianos, 8) +
-    term(d.metacarpianos, 5) +
-    term(d.falProxMedias, 9) +
-    term(d.falDistales, 5)
+    unitTerm(d.carpianos, 8) +
+    unitTerm(d.metacarpianos, 5) +
+    unitTerm(d.falProximales, 5) +
+    unitTerm(num(d.falMedias) + num(d.falDistales), 9)
   );
 }
 
-/** Foot split into 5 anatomical units (max 5 pts/foot). */
+/**
+ * PIE — 5 unidades anatómicas, máx 5 pts/pie.
+ *
+ *   U.A.1  calcaneo                            /1
+ *   U.A.2  astragalo                           /1
+ *   U.A.3  restoTarso                          /5   (navicular, cuboides, 3 cuneiformes)
+ *   U.A.4  metatarsianos                       /5
+ *   U.A.5  falProx + falMedias + falDistales   /10  ← UNA sola unidad en la fuente
+ *
+ * La fuente carga el peso en los huesos grandes y densos (tarso = 60 % del pie);
+ * la partición anterior lo cargaba en las falanges (60 %), que son lo primero que
+ * se pierde. Caso testigo: solo calcáneo + astrágalo → 2,00 pts (antes 0,29).
+ *
+ * 🔒 RAREZAS DE LA FUENTE — se REPLICAN, no se corrigen (principio rector, SDD §5.2):
+ *   1. La U.A.5 usa denominador **10** aunque anatómicamente son **14** falanges:
+ *      un pie con 11–14 falanges satura en 1,0. Capturamos 14 (más información) y
+ *      puntuamos sobre 10 (fidelidad).
+ *   2. Los denominadores del pie suman **22** (1+1+5+5+10) aunque el pie tiene
+ *      **26** huesos. No es un bug nuestro: es la fuente. Va declarado en el
+ *      apartado metodológico del TFM.
+ * Un índice "corregido" a criterio propio deja de ser comparable con cualquier
+ * otro estudio que use el EAT.
+ */
 function footPoints(f: Dict): number {
   if (!f || typeof f !== "object") return 0;
   const d = f as Record<string, unknown>;
-  const term = (v: unknown, max: number) => Math.min(1, num(v) / max);
   return (
-    term(d.tarsianos, 7) +
-    term(d.metatarsianos, 5) +
-    term(d.falProx, 5) +
-    term(d.falMedias, 4) +
-    term(d.falDistales, 5)
+    unitTerm(d.calcaneo, 1) +
+    unitTerm(d.astragalo, 1) +
+    unitTerm(d.restoTarso, 5) +
+    unitTerm(d.metatarsianos, 5) +
+    unitTerm(num(d.falProx) + num(d.falMedias) + num(d.falDistales), 10)
   );
 }
 
-function handBones(h: Dict): number {
-  if (!h || typeof h !== "object") return 0;
-  return Object.values(h as Record<string, unknown>).reduce<number>((a, v) => a + num(v), 0);
+/**
+ * ¿El grupo tiene una calidad REGISTRADA? (ICH, SDD §3.3)
+ *
+ * Distingue lo AUSENTE de lo CERO:
+ *   - `undefined` / `null` / `""` / no numérico → NO registrado → sale del promedio.
+ *   - `0` (o `"0"`) → SÍ registrado: es una observación válida de calidad nula
+ *     y tiene que entrar al promedio, arrastrando el ICH hacia abajo.
+ */
+function isQualityScored(v: unknown): boolean {
+  if (v === undefined || v === null || v === "") return false;
+  const n = typeof v === "number" ? v : parseFloat(String(v));
+  return Number.isFinite(n);
 }
 
 export interface EATMetrics {
@@ -92,19 +162,27 @@ export function computeEAT(data: Record<string, unknown>): EATMetrics {
 
   const ipo = (totalPresent / EAT_IPO_MAX) * 100;
 
-  // ICH = average quality across groups that have bones present (blanks ignored).
+  // ICH = average quality across groups that (a) have bones present AND (b) have a
+  // quality actually SCORED. A present group with no `value` recorded is EXCLUDED
+  // from the average instead of contributing a 0 (which used to drag the ICH down
+  // while still counting in the denominator — SDD §3.3, incidencia medida 0/60).
+  //
+  // ⚠️ La presencia de manos/pies se cuenta con las allowlists de `lib/eatUnits.ts`:
+  // un `Object.values(manoDer).reduce(...)` genérico DUPLICA los huesos cuando el
+  // espejo legacy (`falProxMedias` / `tarsianos`) convive con las claves nuevas.
   const presence: Record<string, number> = {
     craneo, vertebras, huesosLargos, huesosPlanos, costillas,
     mandibula, hioides,
-    manos: handBones(data.manoDer as Dict) + handBones(data.manoIzq as Dict),
-    pies: handBones(data.pieDer as Dict) + handBones(data.pieIzq as Dict),
+    manos: handBoneCount(data.manoDer) + handBoneCount(data.manoIzq),
+    pies: footBoneCount(data.pieDer) + footBoneCount(data.pieIzq),
   };
-  const quality = (data.quality ?? {}) as Record<string, { value?: number }>;
+  const quality = (data.quality ?? {}) as Record<string, { value?: unknown } | undefined>;
   const present = Object.keys(presence).filter((k) => presence[k] > 0);
+  const scored = present.filter((k) => isQualityScored(quality[k]?.value));
   const ich =
-    present.length === 0
+    scored.length === 0
       ? 0
-      : present.reduce((a, k) => a + num(quality[k]?.value), 0) / present.length;
+      : scored.reduce((a, k) => a + num(quality[k]?.value), 0) / scored.length;
 
   const eat = 100 - (ipo * ich) / 100;
 

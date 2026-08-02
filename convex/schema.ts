@@ -48,10 +48,19 @@ export default defineSchema({
     // Zonación: { completitudGlobal, completitudPorElemento, mne, ffi, ... }.
     metricas: v.optional(v.any()),
 
-    // --- Corrección metodológica de Zonación (aditivo, idempotencia) ---
-    // Versión del schema de datos de la ficha. Idempotencia de la migración
-    // 2026-06-zonacion: ausente/undefined o < 2 = sin migrar; = 2 = migrada.
-    // Ronan setea = 2 al terminar de migrar cada ficha de zonación.
+    // --- Versión del schema de datos de `data` (idempotencia de migraciones) ---
+    // Contador global monotónico; la semántica se documenta por bump y cada
+    // migración filtra además por `tipo`. Fuente de verdad de los shapes:
+    //   Zonación → `lib/zonacionMigration.ts` · EAT → `lib/eatUnits.ts`.
+    //
+    //   ausente / 1 → shape original (2026-06 y anterior).
+    //   2           → Zonación: corrección metodológica 2026-06
+    //                 (sacro 20→4, mandíbula 14→7, rótula fuera del pie).
+    //   3           → EAT: unidades anatómicas de mano/pie desdobladas
+    //                 (2026-08, SDD-fidelidad-EAT-unidades-anatomicas):
+    //                 pieX.tarsianos → calcaneo/astragalo/restoTarso y
+    //                 manoX.falProxMedias → falProximales/falMedias.
+    //                 Las fichas de Zonación se quedan en 2 (no se tocan).
     schemaVersion: v.optional(v.number()),
 
     // Revisiones que Martina debe atender tras la corrección metodológica.

@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { computeMetrics } from "./lib/metrics";
+import { prepararEscrituraEat } from "./lib/eatWrite";
 
 const tipoValidator = v.union(v.literal("zonacion"), v.literal("eat"));
 
@@ -29,6 +30,13 @@ export const crear = mutation({
       );
     }
 
+    // Fichas EAT: shape granular v3 + validación de rango. Zonación pasa derecho
+    // (su migración vive en `lib/zonacionMigration.ts` y queda en schemaVersion 2).
+    if (args.tipo === "eat") {
+      const { data, metricas, schemaVersion } = prepararEscrituraEat(args.data, Date.now());
+      return await ctx.db.insert("fichas", { ...args, data, metricas, schemaVersion });
+    }
+
     const metricas = computeMetrics(args.tipo, args.data ?? {});
     return await ctx.db.insert("fichas", { ...args, metricas });
   },
@@ -44,6 +52,19 @@ export const actualizar = mutation({
   handler: async (ctx, { id, data, ...rest }) => {
     const ficha = await ctx.db.get(id);
     if (!ficha) throw new Error("La ficha no existe.");
+
+    if (ficha.tipo === "eat") {
+      // ⚠️ El tercer argumento NO es opcional acá: `ficha.data` es lo que rescata
+      // `data.eatDerivation`, que el payload de `EATForm` no trae (handoff §4.3).
+      const {
+        data: normalizado,
+        metricas,
+        schemaVersion,
+      } = prepararEscrituraEat(data, Date.now(), ficha.data);
+      await ctx.db.patch(id, { ...rest, data: normalizado, metricas, schemaVersion });
+      return;
+    }
+
     const metricas = computeMetrics(ficha.tipo, data ?? {});
     await ctx.db.patch(id, { ...rest, data, metricas });
   },

@@ -4,188 +4,25 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import {
+  EAT_EXTREMIDADES,
+  EAT_GRUPOS_BOOL,
+  TIDY_HEADERS,
+  ZON_ELEMENTOS,
+  canonicalLimbEntries,
+  numericEntries,
+  tidyRowToArray,
+  tidyRowsFor,
+  truthyKeys,
+  type DashRow,
+} from "@/lib/tidyExport";
 
 /* ================================================================== */
-/*  Tipos (espejan el shape de api.analisis.dashboard — read-only).    */
+/*  Esta página es SOLO render. Los tipos del dashboard, los mapas de   */
+/*  elementos y la construcción del tidy viven en `@/lib/tidyExport`,   */
+/*  que es puro y está testeado (`tests/datos-export-tidy.test.mjs`).   */
 /*  Las métricas vienen YA calculadas del backend; acá NO se recalcula. */
 /* ================================================================== */
-
-interface ZonMetrics {
-  completitudGlobal: number;
-  zonasPresentes: number;
-  elementosPresentes: number;
-  ffi: { n: number; media: number | null; frescas: number; secas: number };
-  alteracionesCount: number;
-  fragmentosCount: number;
-}
-interface EatMetrics {
-  ipo: number;
-  ich: number;
-  eat: number;
-  totalPresent: number;
-}
-interface Metodo<M> {
-  presente: boolean;
-  metricas?: M | null;
-  data?: Record<string, unknown> | null;
-  registrador?: string;
-  fechaRegistro?: string;
-  revisionesPendientes?: unknown[];
-}
-interface DashRow {
-  _id: string;
-  codigoCanonico: string;
-  anioExcavacion: number;
-  sitio: string;
-  numeroFosa: string;
-  codigoUF: string;
-  numeroIndividuo: string;
-  sexoEstimado: string | null;
-  edadEstimada: string | null;
-  observaciones: string | null;
-  revisionesPendientesCount: number;
-  zonacion: Metodo<ZonMetrics>;
-  eat: Metodo<EatMetrics>;
-}
-
-/* ================================================================== */
-/*  Mapas de elementos / grupos para el detalle crudo y el export      */
-/* ================================================================== */
-
-const ZON_ELEMENTOS: { key: string; label: string }[] = [
-  { key: "cranium_zones", label: "Cráneo" },
-  { key: "mandible_zones", label: "Mandíbula" },
-  { key: "vertebrae_zones", label: "Vértebras" },
-  { key: "sacrum_zones", label: "Sacro" },
-  { key: "sternum_zones", label: "Esternón" },
-  { key: "clavicle_zones", label: "Clavícula" },
-  { key: "rib_zones", label: "Costillas" },
-  { key: "scapula_zones", label: "Escápula" },
-  { key: "humerus_zones", label: "Húmero" },
-  { key: "radius_zones", label: "Radio" },
-  { key: "ulna_zones", label: "Cúbito" },
-  { key: "os_coxae_zones", label: "Coxal" },
-  { key: "femur_zones", label: "Fémur" },
-  { key: "tibia_zones", label: "Tibia" },
-  { key: "fibula_zones", label: "Peroné" },
-  { key: "patella_zones", label: "Rótula" },
-  { key: "hand_zones", label: "Mano" },
-  { key: "foot_zones", label: "Pie" },
-];
-
-const EAT_GRUPOS_BOOL: { key: string; label: string }[] = [
-  { key: "craneo", label: "Cráneo" },
-  { key: "vertebras", label: "Vértebras" },
-  { key: "huesosLargos", label: "Huesos largos" },
-  { key: "huesosPlanos", label: "Huesos planos" },
-  { key: "costillas", label: "Costillas" },
-];
-
-const EAT_EXTREMIDADES: { key: string; label: string }[] = [
-  { key: "manoDer", label: "Mano derecha" },
-  { key: "manoIzq", label: "Mano izquierda" },
-  { key: "pieDer", label: "Pie derecho" },
-  { key: "pieIzq", label: "Pie izquierdo" },
-];
-
-/* ---- helpers de extracción del data crudo -------------------------- */
-
-function truthyKeys(o: unknown): string[] {
-  if (!o || typeof o !== "object") return [];
-  return Object.entries(o as Record<string, unknown>)
-    .filter(([, v]) => Boolean(v))
-    .map(([k]) => k);
-}
-
-function numericEntries(o: unknown): [string, number][] {
-  if (!o || typeof o !== "object") return [];
-  return Object.entries(o as Record<string, unknown>)
-    .map(([k, v]) => [k, Number(v)] as [string, number])
-    .filter(([, v]) => Number.isFinite(v) && v > 0);
-}
-
-/* ================================================================== */
-/*  Export helpers (client-side, sin librerías externas)               */
-/* ================================================================== */
-
-interface TidyRow {
-  codigo: string;
-  sitio: string;
-  fosa: string;
-  uf: string;
-  metodo: string;
-  elemento: string;
-  clave: string;
-  valor: number;
-}
-
-function tidyRowsFor(row: DashRow): TidyRow[] {
-  const base = {
-    codigo: row.codigoCanonico,
-    sitio: row.sitio,
-    fosa: row.numeroFosa,
-    uf: row.codigoUF,
-  };
-  const out: TidyRow[] = [];
-
-  // ---- Zonación ----
-  const zd = row.zonacion.presente ? row.zonacion.data ?? {} : null;
-  if (zd) {
-    for (const { key, label } of ZON_ELEMENTOS) {
-      for (const k of truthyKeys(zd[key])) {
-        out.push({ ...base, metodo: "zonacion", elemento: label, clave: k, valor: 1 });
-      }
-    }
-    for (const [k, v] of numericEntries(zd.fragments)) {
-      out.push({ ...base, metodo: "zonacion", elemento: "Fragmentos", clave: k, valor: v });
-    }
-    for (const k of truthyKeys(zd.taphonomy)) {
-      out.push({ ...base, metodo: "zonacion", elemento: "Tafonomía", clave: k, valor: 1 });
-    }
-    if (Array.isArray(zd.ffi_rows)) {
-      (zd.ffi_rows as Record<string, unknown>[]).forEach((r, i) => {
-        for (const f of ["outline", "angle", "texture"] as const) {
-          const val = Number(r[f]);
-          if (r[f] !== "" && r[f] !== undefined && r[f] !== null && Number.isFinite(val)) {
-            out.push({
-              ...base,
-              metodo: "zonacion",
-              elemento: "FFI",
-              clave: `fila${i + 1}_${f}`,
-              valor: val,
-            });
-          }
-        }
-      });
-    }
-  }
-
-  // ---- EAT ----
-  const ed = row.eat.presente ? row.eat.data ?? {} : null;
-  if (ed) {
-    for (const { key, label } of EAT_GRUPOS_BOOL) {
-      for (const k of truthyKeys(ed[key])) {
-        out.push({ ...base, metodo: "eat", elemento: label, clave: k, valor: 1 });
-      }
-    }
-    if (ed.mandibula) out.push({ ...base, metodo: "eat", elemento: "Mandíbula", clave: "mandibula", valor: 1 });
-    if (ed.hioides) out.push({ ...base, metodo: "eat", elemento: "Hioides", clave: "hioides", valor: 1 });
-    for (const { key, label } of EAT_EXTREMIDADES) {
-      for (const [k, v] of numericEntries(ed[key])) {
-        out.push({ ...base, metodo: "eat", elemento: label, clave: k, valor: v });
-      }
-    }
-    const quality = (ed.quality ?? {}) as Record<string, { value?: number }>;
-    for (const [k, q] of Object.entries(quality)) {
-      const val = Number(q?.value);
-      if (Number.isFinite(val) && val > 0) {
-        out.push({ ...base, metodo: "eat", elemento: "Calidad (ICH)", clave: k, valor: val });
-      }
-    }
-  }
-
-  return out;
-}
 
 /* Columnas de la tabla maestra (wide). Fuente de verdad para tabla + export. */
 type Col = { key: string; label: string; get: (r: DashRow) => string | number };
@@ -350,9 +187,12 @@ export default function DatosPage() {
   }
   function exportCrudoCSV() {
     const tidy = filtrados.flatMap(tidyRowsFor);
-    const headers = ["codigo", "sitio", "fosa", "uf", "metodo", "elemento", "clave", "valor"];
-    const data = tidy.map((t) => [t.codigo, t.sitio, t.fosa, t.uf, t.metodo, t.elemento, t.clave, t.valor]);
-    download(`registro-osteologico_crudo-tidy_${HOY()}.csv`, toCSV(headers, data), "text/csv;charset=utf-8");
+    const data = tidy.map(tidyRowToArray);
+    download(
+      `registro-osteologico_crudo-tidy_${HOY()}.csv`,
+      toCSV([...TIDY_HEADERS], data),
+      "text/csv;charset=utf-8",
+    );
   }
   function exportCrudoJSON() {
     const tidy = filtrados.flatMap(tidyRowsFor);
@@ -739,8 +579,10 @@ function DetalleCrudo({
                     </div>
                   </div>
                 )}
-                {EAT_EXTREMIDADES.map(({ key, label }) => {
-                  const units = ed ? numericEntries(ed[key]) : [];
+                {/* Misma partición canónica que el export: sin espejos legacy,
+                    para que el detalle en pantalla y el CSV coincidan. */}
+                {EAT_EXTREMIDADES.map(({ key, label, kind }) => {
+                  const units = ed ? canonicalLimbEntries(ed[key], kind) : [];
                   if (units.length === 0) return null;
                   return (
                     <div key={key}>

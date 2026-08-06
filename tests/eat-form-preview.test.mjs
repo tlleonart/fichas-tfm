@@ -43,6 +43,7 @@ import {
   buildEatData,
   previewMetrics,
   presenceCounts,
+  pruneQualityForAbsentGroups,
   unitPoints,
 } from "@/lib/eatPreview.ts";
 import { computeEAT } from "@convex/lib/metrics.ts";
@@ -440,6 +441,97 @@ describe("payload (`buildEatData`)", () => {
     const m = previewMetrics(data);
     assert.equal(m.ich, 0);
     assert.equal(m.eat, 100);
+  });
+
+  /* ────────────────────────────────────────────────────────────────────────
+     🐛 Calidad huérfana — bug reportado por Martina el 2026-08-06.
+     El slider del ICH se gatea por presencia, pero el gate era sólo de RENDER:
+     al destildar el hueso el control desaparecía y el valor cargado quedaba en el
+     estado, viajaba en el payload y se persistía. Quedaban 2 fichas de la muestra
+     con calidad imposible de ver ni borrar desde la interfaz
+     (`UF3014-I14` hioides=95 · `UF3018-I18` costillas=40).
+     El ICH nunca estuvo mal: promedia por PRESENCIA, así que el huérfano no entra.
+     Estos tests fijan las DOS direcciones, que no son simétricas.
+     ──────────────────────────────────────────────────────────────────────── */
+  describe("🐛 calidad de grupos ausentes (no puede quedar huérfana)", () => {
+    test("grupo AUSENTE con calidad cargada → se limpia al armar el payload", () => {
+      const data = buildEatData(
+        estado({ hioides: false, quality: { hioides: { value: 95, obs: "" } } }),
+      );
+      assert.equal(data.quality.hioides.value, 0);
+      assert.equal(data.quality.hioides.obs, "");
+    });
+
+    test("también se limpia la observación del grupo ausente", () => {
+      const data = buildEatData(
+        estado({ costillas: {}, quality: { costillas: { value: 40, obs: "quedó de antes" } } }),
+      );
+      assert.equal(data.quality.costillas.value, 0);
+      assert.equal(data.quality.costillas.obs, "");
+    });
+
+    test("🔒 el grupo PRESENTE con calidad 0 NO se toca (0 es calidad nula, no vacío)", () => {
+      const data = buildEatData(
+        estado({ craneo: { Frontal: true }, quality: { craneo: { value: 0, obs: "pulverizado" } } }),
+      );
+      assert.equal(data.quality.craneo.value, 0);
+      assert.equal(data.quality.craneo.obs, "pulverizado");
+    });
+
+    test("🔒 el grupo PRESENTE sin `value` sigue sin `value` (no se fabrica un 0)", () => {
+      const data = buildEatData(
+        estado({ craneo: { Frontal: true }, quality: { craneo: { obs: "sin evaluar" } } }),
+      );
+      assert.equal(data.quality.craneo.value, undefined);
+      assert.equal(data.quality.craneo.obs, "sin evaluar");
+    });
+
+    test("limpiar un grupo ausente NO mueve el ICH (promedia por presencia)", () => {
+      const base = { craneo: { Frontal: true }, quality: { craneo: { value: 80, obs: "" } } };
+      const limpio = previewMetrics(buildEatData(estado(base)));
+      const conHuerfana = previewMetrics(
+        buildEatData(
+          estado({ ...base, quality: { ...base.quality, hioides: { value: 10, obs: "" } } }),
+        ),
+      );
+      assert.equal(conHuerfana.ich, limpio.ich);
+      assert.equal(conHuerfana.ich, 80);
+      assert.equal(conHuerfana.eat, limpio.eat);
+    });
+
+    test("mano y pie: el gate usa el conteo por allowlist, no el objeto entero", () => {
+      // Mano vacía → `manos` ausente → la calidad se limpia.
+      const vacia = buildEatData(estado({ quality: { manos: { value: 70, obs: "" } } }));
+      assert.equal(vacia.quality.manos.value, 0);
+      // Mano con un solo hueso → `manos` presente → la calidad se respeta.
+      const conHueso = buildEatData(
+        estado({ manoDer: { ...EMPTY_MANO, carpianos: 1 }, quality: { manos: { value: 70, obs: "" } } }),
+      );
+      assert.equal(conHueso.quality.manos.value, 70);
+    });
+
+    test("una clave desconocida no se toca (no le inventamos presencia)", () => {
+      const out = pruneQualityForAbsentGroups(
+        estado({ quality: { grupoRaro: { value: 33, obs: "x" } } }),
+      );
+      assert.deepEqual(out.grupoRaro, { value: 33, obs: "x" });
+    });
+
+    test("el saneamiento no muta el estado del formulario", () => {
+      const s = estado({ hioides: false, quality: { hioides: { value: 95, obs: "ojo" } } });
+      buildEatData(s);
+      assert.equal(s.quality.hioides.value, 95);
+      assert.equal(s.quality.hioides.obs, "ojo");
+    });
+
+    test("los dos casos reales de la muestra quedan saneados", () => {
+      // UF3014-I14: hioides destildado con calidad 95.
+      const i14 = buildEatData(estado({ hioides: false, quality: { hioides: { value: 95, obs: "" } } }));
+      assert.equal(i14.quality.hioides.value, 0);
+      // UF3018-I18: costillas sin ninguna marcada, con calidad 40.
+      const i18 = buildEatData(estado({ costillas: {}, quality: { costillas: { value: 40, obs: "" } } }));
+      assert.equal(i18.quality.costillas.value, 0);
+    });
   });
 
   test("un grupo presente SIN `value` sigue excluido del promedio (no se fabrica un 0)", () => {

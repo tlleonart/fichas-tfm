@@ -899,10 +899,17 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
         <div className="space-y-4">
           {QUALITY_GROUPS.map((g) => {
             const hasPresence = groupCounts[g.key as keyof typeof groupCounts] > 0;
+            /* Calidad que quedó cargada de antes y ya no corresponde, porque el
+               grupo dejó de tener huesos presentes. El slider está oculto, así que
+               sin este aviso el valor sería invisible: se limpia al guardar
+               (`pruneQualityForAbsentGroups`) y acá se dice explícitamente. */
+            const huerfana =
+              !hasPresence &&
+              (Number(quality[g.key]?.value) > 0 || (quality[g.key]?.obs ?? "").trim() !== "");
             return (
               <div
                 key={g.key}
-                className={`border rounded-lg p-3 transition ${hasPresence ? "border-line-strong bg-surface" : "border-line bg-surface-2 opacity-50"}`}
+                className={`border rounded-lg p-3 transition ${hasPresence ? "border-line-strong bg-surface" : huerfana ? "border-amber-500/40 bg-amber-500/10" : "border-line bg-surface-2 opacity-50"}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-muted">{g.label}</span>
@@ -914,6 +921,21 @@ export default function EATForm({ initialData, registrador: registradorProp, fec
                     <span className="text-xs text-faint">Sin huesos presentes</span>
                   )}
                 </div>
+                {huerfana && (
+                  <p
+                    className="text-xs text-muted"
+                    data-testid={`quality-${g.key}-huerfana`}
+                  >
+                    Este grupo tenía una calidad cargada
+                    {Number(quality[g.key]?.value) > 0 ? ` (${quality[g.key]?.value}%)` : ""}
+                    {(quality[g.key]?.obs ?? "").trim() !== ""
+                      ? ` y la observación «${quality[g.key]?.obs}»`
+                      : ""}
+                    , pero el grupo no tiene huesos marcados como presentes. Al guardar
+                    se va a limpiar. Si la calidad era correcta, marcá primero la presencia
+                    del hueso y volvé a cargarla.
+                  </p>
+                )}
                 {hasPresence && (
                   <>
                     <input

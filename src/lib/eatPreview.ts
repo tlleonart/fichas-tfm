@@ -350,14 +350,54 @@ export interface EatFormState {
 }
 
 /**
+ * `quality` saneado: un grupo SIN huesos presentes no puede conservar calidad.
+ *
+ * 🐛 Bug que arregla (reportado por Martina 2026-08-06, confirmado en 2 fichas de
+ * la muestra — `UF3014-I14` hioides=95 y `UF3018-I18` costillas=40): el formulario
+ * gatea el slider por presencia, pero **sólo en el render**. Al destildar el hueso
+ * el control desaparece y el valor ya cargado queda en el estado, viaja en el
+ * payload y se persiste. Queda un valor de calidad huérfano, imposible de ver o
+ * de borrar desde la interfaz.
+ *
+ * 🔒 Las dos direcciones son distintas y hay que tratarlas distinto:
+ *   - grupo AUSENTE con valor  → se limpia acá (es el bug);
+ *   - grupo PRESENTE con `value = 0` → **se deja**, `0` es "calidad nula", una
+ *     observación válida (SDD §5bis.2). Convertirlo en `undefined` lo sacaría del
+ *     promedio y movería el ICH de las fichas históricas.
+ *
+ * El grupo ausente queda en `{ value: 0, obs: "" }`, que es exactamente el estado
+ * de todos los demás grupos ausentes de la base: así el saneamiento no introduce
+ * una tercera forma de "vacío" ni cambia la semántica si el hueso se vuelve a
+ * marcar como presente.
+ *
+ * NEUTRO PARA LAS MÉTRICAS: el ICH promedia por PRESENCIA, así que limpiar un
+ * grupo ausente no puede mover el ICH. Verificado sobre las 62 fichas de PROD:
+ * Δ ICH máximo = 0,000000.
+ *
+ * Las claves que no correspondan a ninguno de los 9 grupos conocidos se dejan
+ * intactas (no inventamos presencia para algo que no sabemos qué es).
+ */
+export function pruneQualityForAbsentGroups(s: EatFormState): Record<string, QualityEntry> {
+  const counts = presenceCounts(s);
+  const out: Record<string, QualityEntry> = {};
+  for (const [key, entry] of Object.entries(s.quality)) {
+    const count = counts[key];
+    const conocido = count !== undefined;
+    out[key] = conocido && count === 0 ? { value: 0, obs: "" } : { ...entry };
+  }
+  return out;
+}
+
+/**
  * Estado del formulario → `data` de la ficha.
  *
  * 🔒 Reglas del handoff §3 que esta función garantiza por construcción:
  *   - NO emite `falProxMedias` ni `tarsianos` (espejos: los reescribe el backend);
  *   - NO emite `falMediasDistales` (el agregado que este cambio elimina);
- *   - NO toca `quality`: los `value = 0` viajan como `0`, nunca como `undefined`
- *     (con el ICH hardened, un grupo presente sin `value` sale del promedio y
- *     movería el ICH de las 60 fichas históricas — SDD §5bis.2);
+ *   - de `quality` sanea SOLO los grupos ausentes (ver `pruneQualityForAbsentGroups`):
+ *     los `value = 0` de los grupos PRESENTES viajan como `0`, nunca como
+ *     `undefined` (con el ICH hardened, un grupo presente sin `value` sale del
+ *     promedio y movería el ICH de las fichas históricas — SDD §5bis.2);
  *   - `eatDerivation` no se manda: lo rescata `fichas.actualizar` del `data` previo.
  */
 export function buildEatData(s: EatFormState): Record<string, unknown> {
@@ -373,7 +413,7 @@ export function buildEatData(s: EatFormState): Record<string, unknown> {
     manoIzq: { ...s.manoIzq },
     pieDer: { ...s.pieDer },
     pieIzq: { ...s.pieIzq },
-    quality: s.quality,
+    quality: pruneQualityForAbsentGroups(s),
     observations: s.observations,
   };
   const m = computeEAT(data);

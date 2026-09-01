@@ -1,44 +1,29 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { EATMetrics, ZonacionMetrics } from "./lib/metrics";
+import * as stats from "./lib/stats";
+import {
+  analizarPoblacion,
+  construirFila,
+  UMBRAL_COMPLETITUD_EXTREMA,
+  ZONAS_MANOS_PIES,
+  ZONAS_NUCLEO,
+} from "./lib/poblacional";
+import { ZONATION_TOTAL_ZONES } from "./lib/metrics";
 
 /* ------------------------------------------------------------------ */
-/*  Statistics helpers (Spearman rank correlation)                     */
+/*  Statistics helpers                                                 */
 /* ------------------------------------------------------------------ */
+/* Pearson y Spearman se movieron a `lib/stats.ts` (funciones puras,
+ * testeadas offline) junto con el resto del motor estadístico. Acá quedan
+ * envoltorios que preservan EXACTAMENTE el contrato histórico de
+ * `comparacion`: redondeo a 3 decimales y `null` con n < 3.
+ * No cambiar: `/analisis` publica estos números desde la v1. */
 
-function ranks(xs: number[]): number[] {
-  const idx = xs.map((x, i) => [x, i] as const).sort((a, b) => a[0] - b[0]);
-  const r = new Array<number>(xs.length);
-  let i = 0;
-  while (i < idx.length) {
-    let j = i;
-    while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++;
-    const avg = (i + j) / 2 + 1; // average rank (1-based) for ties
-    for (let k = i; k <= j; k++) r[idx[k][1]] = avg;
-    i = j + 1;
-  }
-  return r;
-}
-
-function pearson(x: number[], y: number[]): number | null {
-  const n = x.length;
-  if (n < 2) return null;
-  const mx = x.reduce((a, b) => a + b, 0) / n;
-  const my = y.reduce((a, b) => a + b, 0) / n;
-  let num = 0, dx = 0, dy = 0;
-  for (let i = 0; i < n; i++) {
-    num += (x[i] - mx) * (y[i] - my);
-    dx += (x[i] - mx) ** 2;
-    dy += (y[i] - my) ** 2;
-  }
-  const den = Math.sqrt(dx * dy);
-  return den === 0 ? null : Math.round((num / den) * 1000) / 1000;
-}
-
-/** Spearman rho = Pearson on ranks. Returns null below the minimum sample size. */
+/** ρ de Spearman redondeado a 3 decimales, como lo devolvía esta query. */
 function spearman(x: number[], y: number[], minN = 3): number | null {
-  if (x.length < minN) return null;
-  return pearson(ranks(x), ranks(y));
+  const rho = stats.spearman(x, y, minN);
+  return rho === null ? null : stats.round(rho, 3);
 }
 
 /* ------------------------------------------------------------------ */
@@ -212,5 +197,147 @@ export const dashboard = query({
           : { presente: false },
       };
     });
+  },
+});
+
+/* ------------------------------------------------------------------ */
+/*  Análisis poblacional — la batería completa del TFM                 */
+/* ------------------------------------------------------------------ */
+
+/** Versión del contrato del payload. Bump ante cualquier cambio de forma. */
+export const POBLACIONAL_VERSION = "1.0.0";
+
+/**
+ * Query de SOLO LECTURA que devuelve TODA la estadística poblacional del TFM
+ * (Tablas 1–7c) en un único payload.
+ *
+ * Reemplaza la "recorrida contra la planilla externa": cada número de acá está
+ * pineado en `tests/stats-tfm.test.mjs` contra el TFM ya defendido.
+ *
+ * NO recalcula métricas individuales: lee las `metricas` persistidas por
+ * `lib/metrics.ts` (única fuente de verdad) y delega TODO el cómputo en
+ * `lib/poblacional.ts` + `lib/stats.ts`, que son puros y se testean offline.
+ * Esta función solo hace I/O: dos `collect()` unidos en memoria (sin N+1).
+ *
+ * Alcance de los análisis (fidelidad al TFM):
+ *   - Solo entran los individuos PAREADOS (con ficha de Zonación Y de EAT).
+ *   - Tablas 1–6 sobre la muestra completa; `concordancia.controlSinExtremos`
+ *     y todo `manosPiesVsNucleo` sobre la muestra sin los casos de completitud
+ *     extrema (< `umbralCompletitudExtrema`), como declara la Tabla 7b.
+ *
+ * Args:
+ *   sitio?                     filtra a un solo sitio (por defecto: total)
+ *   umbralCompletitudExtrema?  % de completitud global por debajo del cual un
+ *                              individuo cuenta como caso extremo (default 5)
+ */
+export const poblacional = query({
+  args: {
+    sitio: v.optional(v.string()),
+    umbralCompletitudExtrema: v.optional(v.number()),
+  },
+  handler: async (ctx, { sitio, umbralCompletitudExtrema }) => {
+    const individuos = sitio
+      ? await ctx.db
+          .query("individuos")
+          .withIndex("by_sitio", (q) => q.eq("sitio", sitio))
+          .collect()
+      : await ctx.db.query("individuos").collect();
+
+    const todasLasFichas = await ctx.db.query("fichas").collect();
+    const porIndividuo = new Map<string, typeof todasLasFichas>();
+    for (const f of todasLasFichas) {
+      const k = f.individuoId as unknown as string;
+      const arr = porIndividuo.get(k);
+      if (arr) arr.push(f);
+      else porIndividuo.set(k, [f]);
+    }
+
+    const filas = [];
+    let soloZonacion = 0;
+    let soloEat = 0;
+    let sinFichas = 0;
+
+    for (const ind of individuos) {
+      const fs = porIndividuo.get(ind._id as unknown as string) ?? [];
+      const zon = fs.find((f) => f.tipo === "zonacion");
+      const eat = fs.find((f) => f.tipo === "eat");
+
+      const fila = construirFila(
+        {
+          _id: ind._id as unknown as string,
+          codigoCanonico: ind.codigoCanonico,
+          sitio: ind.sitio,
+          sexoEstimado: ind.sexoEstimado ?? null,
+          edadEstimada: ind.edadEstimada ?? null,
+        },
+        (zon?.metricas ?? null) as ZonacionMetrics | null,
+        (eat?.metricas ?? null) as EATMetrics | null,
+      );
+
+      if (fila) filas.push(fila);
+      else if (zon && !eat) soloZonacion += 1;
+      else if (eat && !zon) soloEat += 1;
+      else sinFichas += 1;
+    }
+
+    const umbral = umbralCompletitudExtrema ?? UMBRAL_COMPLETITUD_EXTREMA;
+    const analisis =
+      filas.length >= 3
+        ? analizarPoblacion(filas, { umbralCompletitudExtrema: umbral })
+        : null;
+
+    const porSitio = new Map<string, number>();
+    for (const f of filas) porSitio.set(f.sitio, (porSitio.get(f.sitio) ?? 0) + 1);
+
+    return {
+      version: POBLACIONAL_VERSION,
+      alcance: {
+        sitio: sitio ?? null,
+        umbralCompletitudExtrema: umbral,
+      },
+      denominadores: {
+        zonacionTotal: ZONATION_TOTAL_ZONES,
+        zonacionNucleo: ZONAS_NUCLEO,
+        zonacionManosPies: ZONAS_MANOS_PIES,
+      },
+      muestra: {
+        individuos: individuos.length,
+        pareados: filas.length,
+        soloZonacion,
+        soloEat,
+        sinFichas,
+        porSitio: [...porSitio.entries()]
+          .map(([s, n]) => ({ sitio: s, n }))
+          .sort((a, b) => a.sitio.localeCompare(b.sitio, "es")),
+        /** Los análisis requieren al menos 3 individuos pareados. */
+        nSuficiente: filas.length >= 3,
+      },
+      analisis,
+      /**
+       * Fuente canónica "individuos + métricas": una fila por individuo
+       * pareado, con la completitud ya partida en núcleo / manos+pies.
+       * Es la tabla que `/datos`, `/planilla` y `/cobertura` pueden consumir
+       * en lugar de sus tres backends actuales (ver el handoff).
+       */
+      individuos: filas.map((f) => ({
+        individuoId: f.individuoId,
+        codigo: f.codigo,
+        sitio: f.sitio,
+        sexo: f.sexo,
+        edad: f.edad,
+        zonasPresentes: f.zonasPresentes,
+        zonasPorElemento: f.zonasPorElemento,
+        completitudGlobal: stats.round(f.completitudGlobal, 2),
+        completitudNucleo: stats.round(f.completitudNucleo, 2),
+        completitudManosPies: stats.round(f.completitudManosPies, 2),
+        ipo: f.ipo,
+        ich: f.ich,
+        eat: f.eat,
+        afectacionZonacion: stats.round(100 - f.completitudGlobal, 1),
+        ffiMedia: f.ffiMedia,
+        alteraciones: f.alteraciones,
+        fragmentos: f.fragmentos,
+      })),
+    };
   },
 });

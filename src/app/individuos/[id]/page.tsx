@@ -97,6 +97,9 @@ export default function IndividuoDetailPage() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/individuos/${id}/documento`} className="btn btn-ghost">
+              Informe PDF
+            </Link>
             <Link href={`/individuos/${id}/editar`} className="btn btn-ghost">
               Editar
             </Link>

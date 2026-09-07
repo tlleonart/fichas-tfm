@@ -5,6 +5,7 @@ import * as stats from "./lib/stats";
 import {
   analizarPoblacion,
   construirFila,
+  contarSeriadosEat,
   UMBRAL_COMPLETITUD_EXTREMA,
   ZONAS_MANOS_PIES,
   ZONAS_NUCLEO,
@@ -272,6 +273,9 @@ export const poblacional = query({
         },
         (zon?.metricas ?? null) as ZonacionMetrics | null,
         (eat?.metricas ?? null) as EATMetrics | null,
+        // Los conteos de vértebras y costillas salen del registro crudo del EAT:
+        // `metricas.ipo` es el índice agregado y no los desglosa (Tabla 11).
+        contarSeriadosEat(eat?.data),
       );
 
       if (fila) filas.push(fila);

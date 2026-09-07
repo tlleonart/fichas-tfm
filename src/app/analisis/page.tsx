@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import TablasTFM from "@/components/TablasTFM";
 
 function Rho({ value }: { value: number | null }) {
   if (value === null)
@@ -113,6 +114,9 @@ export default function AnalisisPage() {
           </div>
         </section>
       )}
+
+      {/* Las tablas del TFM, calculadas por la app: antes vivían en planillas externas. */}
+      <TablasTFM />
     </div>
   );
 }

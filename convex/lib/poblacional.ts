@@ -122,6 +122,8 @@ export const UMBRAL_COMPLETITUD_EXTREMA = 5;
 /* ================================================================== */
 
 export interface FilaPoblacional {
+  /** Conteos crudos de vértebras y costillas del EAT; null si no se pasaron. */
+  seriadosEat?: SeriadosEat | null;
   individuoId: string;
   codigo: string;
   sitio: string;
@@ -179,10 +181,41 @@ export interface IndividuoBase {
  * TODO (Dante): persistir `zonasPorElemento` en `metricas` haría innecesaria la
  * reconstrucción. Es aditivo y no rompe nada; queda para el schema v3.1.
  */
+/**
+ * Vértebras y costillas presentes según el EAT (el lado "IPO" de la Tabla 11).
+ *
+ * Se cuentan desde el registro crudo del EAT porque las métricas guardadas no los
+ * desglosan: `metricas.ipo` es el índice agregado, no el conteo por grupo.
+ *
+ * Totales del método: 32 vértebras (7 cervicales + 12 torácicas + 5 lumbares +
+ * 5 sacras + 3 coccígeas) y 24 costillas (12 pares).
+ */
+export const EAT_TOTAL_VERTEBRAS = 32;
+export const EAT_TOTAL_COSTILLAS = 24;
+
+export interface SeriadosEat {
+  vertebrasPresentes: number;
+  costillasPresentes: number;
+}
+
+export function contarSeriadosEat(dataEat: unknown): SeriadosEat | null {
+  if (!dataEat || typeof dataEat !== "object") return null;
+  const d = dataEat as Record<string, unknown>;
+  const contar = (v: unknown) =>
+    v && typeof v === "object"
+      ? Object.values(v as Record<string, unknown>).filter(Boolean).length
+      : 0;
+  return {
+    vertebrasPresentes: contar(d.vertebras),
+    costillasPresentes: contar(d.costillas),
+  };
+}
+
 export function construirFila(
   ind: IndividuoBase,
   zon: ZonacionMetrics | null | undefined,
   eat: EATMetrics | null | undefined,
+  seriadosEat?: SeriadosEat | null,
 ): FilaPoblacional | null {
   if (!zon || !eat) return null;
   if (typeof zon.completitudGlobal !== "number" || typeof eat.ipo !== "number") return null;
@@ -207,6 +240,7 @@ export function construirFila(
     sitio: ind.sitio,
     sexo: ind.sexoEstimado ?? null,
     edad: ind.edadEstimada ?? null,
+    seriadosEat: seriadosEat ?? null,
     zonasPorElemento,
     zonasPresentes: zon.zonasPresentes,
     completitudGlobal: zon.completitudGlobal,
@@ -542,6 +576,56 @@ export function analizarPoblacion(
     ),
   };
 
+  /* ---- Tabla 11 — discrepancias en huesos seriados ------------------
+   * Criterio: la zonación registra CERO y el EAT registra presencia. Es la
+   * limitación estructural de la zonación para huesos seriados fragmentados,
+   * y sólo se puede evaluar en los individuos con conteos del EAT disponibles. */
+  const conSeriados = filas.filter((f) => f.seriadosEat != null);
+  const casosSeriados = conSeriados
+    .map((f) => {
+      const se = f.seriadosEat as SeriadosEat;
+      const vertZon = f.zonasPorElemento["vertebrae_zones"] ?? 0;
+      const costZon = f.zonasPorElemento["rib_zones"] ?? 0;
+      const discVert = vertZon === 0 && se.vertebrasPresentes > 0;
+      const discCost = costZon === 0 && se.costillasPresentes > 0;
+      return {
+        codigo: f.codigo, sitio: f.sitio,
+        vertebrasZonacion: vertZon,
+        vertebrasZonacionMax: ZONATION_ELEMENT_MAX["vertebrae_zones"],
+        vertebrasEat: se.vertebrasPresentes,
+        vertebrasEatMax: EAT_TOTAL_VERTEBRAS,
+        costillasZonacion: costZon,
+        costillasZonacionMax: ZONATION_ELEMENT_MAX["rib_zones"],
+        costillasEat: se.costillasPresentes,
+        costillasEatMax: EAT_TOTAL_COSTILLAS,
+        discrepanciaVertebras: discVert,
+        discrepanciaCostillas: discCost,
+      };
+    })
+    .filter((c) => c.discrepanciaVertebras || c.discrepanciaCostillas)
+    // Por número de individuo, como en el manuscrito. Ordenar por el código entero
+    // desordena: el sufijo -I5 y el -I9 van tras años de excavación distintos.
+    .sort((a, b) => {
+      const num = (c: string) => Number.parseInt(c.split("-I").pop() ?? "0", 10) || 0;
+      return a.sitio.localeCompare(b.sitio, "es") || num(a.codigo) - num(b.codigo);
+    });
+
+  const discrepanciasSeriados = {
+    evaluados: conSeriados.length,
+    enVertebras: casosSeriados.filter((c) => c.discrepanciaVertebras).length,
+    enCostillas: casosSeriados.filter((c) => c.discrepanciaCostillas).length,
+    total: casosSeriados.length,
+    pctDeLaMuestra: filas.length ? r((casosSeriados.length / filas.length) * 100) : null,
+    fueraDelSitioDominante: (() => {
+      if (!casosSeriados.length) return 0;
+      const cuenta = new Map<string, number>();
+      for (const c of casosSeriados) cuenta.set(c.sitio, (cuenta.get(c.sitio) ?? 0) + 1);
+      const dominante = [...cuenta.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      return casosSeriados.filter((c) => c.sitio !== dominante).length;
+    })(),
+    casos: casosSeriados,
+  };
+
   return {
     descriptivos,
     ichPorSitio,
@@ -552,6 +636,7 @@ export function analizarPoblacion(
     corticalVsEsponjoso,
     manosPiesVsNucleo,
     correlaciones,
+    discrepanciasSeriados,
     diagnostico: {
       filasConReconstruccionIncoherente: filas.filter((f) => !f.reconstruccionCoherente)
         .length,

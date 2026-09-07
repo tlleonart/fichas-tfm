@@ -1,12 +1,11 @@
 "use client";
 
 /**
- * Las Tablas 1–11 del TFM, dentro de la aplicación.
+ * Las once tablas del TFM, dentro de la aplicación.
  *
- * Hasta ahora `/analisis` sólo mostraba cuatro correlaciones de Spearman: todo el
- * resto del análisis que el trabajo publica se calculaba por fuera, en planillas y
- * scripts verificados sesión a sesión. Esto consume `api.analisis.poblacional`, que
- * está cubierta por 66 tests pineados a los valores publicados.
+ * La numeración y el orden siguen la **V5 del manuscrito (7 de septiembre)**: si la app
+ * numerara distinto que el trabajo, contrastar una contra otro sería un ejercicio de
+ * traducción. Cambiar esta numeración exige mirar el manuscrito primero.
  *
  * No recalcula nada acá: el cómputo vive en `convex/lib/poblacional.ts`.
  */
@@ -19,16 +18,29 @@ function n(v: number | null | undefined, dec = 2): string {
   return v.toFixed(dec).replace(".", ",");
 }
 
-/** Los valores de p muy chicos se reportan como en el trabajo. */
 function p(v: number | null | undefined): string {
   if (v === null || v === undefined) return "—";
   if (v < 0.0001) return "< 0,0001";
   return n(v, 4);
 }
 
+/** "0,075 (p = 0,052)" — la pendiente se lee siempre junto a su p. */
+function pendiente(valor: number | null, pv: number | null): string {
+  if (valor === null) return "—";
+  const pp = pv === null ? "—" : pv < 0.0001 ? "< 0,0001" : `= ${n(pv, 3)}`;
+  return `${n(valor, 3)} (p ${pp})`;
+}
+
+/** "I5" a partir del código canónico, para que coincida con el manuscrito. */
+const corto = (codigo: string) => {
+  const s = codigo.split("-I").pop();
+  return s ? `I${s}` : codigo;
+};
+
 function Tabla({
-  titulo, nota, cabeceras, children, alineDerecha = [],
+  numero, titulo, nota, cabeceras, children, alineDerecha = [],
 }: {
+  numero: number;
   titulo: string;
   nota?: string;
   cabeceras: string[];
@@ -37,19 +49,17 @@ function Tabla({
 }) {
   return (
     <section className="card p-5">
-      <h3 className="font-serif text-base font-semibold text-ink">{titulo}</h3>
+      <h3 className="font-serif text-base font-semibold text-ink">
+        Tabla {numero}. <span className="font-normal">{titulo}</span>
+      </h3>
       {nota && <p className="mt-1 max-w-prose text-xs text-muted">{nota}</p>}
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line-strong">
               {cabeceras.map((c, i) => (
-                <th
-                  key={i}
-                  className={`px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted ${
-                    alineDerecha.includes(i) ? "text-right" : "text-left"
-                  }`}
-                >
+                <th key={i} className={`px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted ${
+                  alineDerecha.includes(i) ? "text-right" : "text-left"}`}>
                   {c}
                 </th>
               ))}
@@ -64,6 +74,17 @@ function Tabla({
 
 const td = "px-2 py-1.5 border-b border-line";
 const tdn = `${td} text-right tabular-nums`;
+const tdGrupo =
+  "px-2 py-1.5 border-b border-line bg-surface-2 text-xs font-semibold uppercase tracking-wide text-muted";
+
+/** Nombres de la Tabla 7 tal como los escribe el manuscrito. */
+const ETIQUETA_KW: Record<string, string> = {
+  ich: "ICH",
+  eat: "EAT",
+  ipo: "IPO",
+  completitudNucleo: "Completitud núcleo /363",
+  completitudGlobal: "Completitud global /635",
+};
 
 export default function TablasTFM() {
   const res = useQuery(api.analisis.poblacional, {});
@@ -84,91 +105,84 @@ export default function TablasTFM() {
 
   const d = a.descriptivos;
   const c = a.concordancia;
+  const ce = c.controlSinExtremos;
+  const rel = a.relacionEatIpoIch;
+  // Puede no venir si el backend desplegado es anterior a este bloque: durante esa
+  // ventana la Tabla 11 no se muestra, en vez de romper toda la pantalla.
+  const disc = a.discrepanciasSeriados as typeof a.discrepanciasSeriados | undefined;
+  const cve = a.corticalVsEsponjoso;
+  const wil = a.manosPiesVsNucleo.wilcoxonPorSitio;
 
   const filasDesc: [string, typeof d.ipo][] = [
-    ["Completitud global (/635)", d.completitudGlobal],
-    ["Completitud del núcleo (/363)", d.completitudNucleo],
-    ["Completitud de manos y pies (/272)", d.completitudManosPies],
+    ["Completitud zonación /635", d.completitudGlobal],
+    ["Completitud zonación núcleo /363", d.completitudNucleo],
     ["IPO", d.ipo],
     ["ICH", d.ich],
     ["EAT", d.eat],
   ];
 
-  const conc: [string, string, string][] = [
-    ["r de Pearson", n(c.global.rPearson, 3), n(c.nucleo.rPearson, 3)],
-    ["CCC de Lin", n(c.global.cccLin, 3), n(c.nucleo.cccLin, 3)],
-    ["Sesgo (Bland-Altman)", n(c.global.sesgo), n(c.nucleo.sesgo)],
-    ["Amplitud LoA 95 %", n(c.global.amplitudLoA95), n(c.nucleo.amplitudLoA95)],
-    ["Discrepancia máxima", n(c.global.discrepanciaMaximaAbs), n(c.nucleo.discrepanciaMaximaAbs)],
+  const concordancia = (b: typeof c.global): [string, string][] => [
+    ["r de Pearson", n(b.rPearson, 3)],
+    ["CCC de Lin", n(b.cccLin, 3)],
+    ["Sesgo (Bland-Altman)", n(b.sesgo)],
+    ["Pendiente (sesgo proporcional)", pendiente(b.pendiente, b.pendienteP)],
+    ["Amplitud LoA 95 %", n(b.amplitudLoA95)],
   ];
 
-  const nucleoNoSignificativo =
-    c.nucleo.pendienteP !== null && c.nucleo.pendienteP >= 0.05;
+  const nucleoNoSignificativo = c.nucleo.pendienteP !== null && c.nucleo.pendienteP >= 0.05;
+
+  // El manuscrito agrupa la Tabla 8 por tejido y ordena de menor a mayor completitud.
+  const porTejido = (t: "esponjoso" | "cortical") =>
+    a.porElemento.filter((e) => e.tejido === t).sort((x, y) => x.completitudMedia - y.completitudMedia);
 
   return (
     <div className="space-y-5">
       <header>
         <h2 className="font-serif text-xl font-semibold text-ink">Análisis poblacional del TFM</h2>
         <p className="mt-1 max-w-prose text-sm text-muted">
-          Las tablas que el trabajo publica, calculadas por la aplicación sobre los datos
-          cargados. Antes vivían en planillas externas.
+          Las once tablas del trabajo, calculadas por la aplicación sobre los datos cargados.
+          La numeración es la del manuscrito.
         </p>
       </header>
 
-      <Tabla
-        titulo="Tabla 1 — Descriptivos globales"
-        cabeceras={["Índice", "n", "Media ± DE", "Mediana", "Mín", "Máx"]}
-        alineDerecha={[1, 2, 3, 4, 5]}
-      >
+      <Tabla numero={1}
+        titulo={`Media y desviación estándar de los cinco índices centrales sobre los ${d.ipo.n} individuos de la muestra.`}
+        cabeceras={["Índice", "μ", "σ"]} alineDerecha={[1, 2]}>
         {filasDesc.map(([lbl, v]) => (
           <tr key={lbl}>
             <td className={td}>{lbl}</td>
-            <td className={tdn}>{v.n}</td>
-            <td className={tdn}>{n(v.media)} ± {n(v.de)}</td>
-            <td className={tdn}>{n(v.mediana)}</td>
-            <td className={tdn}>{n(v.min)}</td>
-            <td className={tdn}>{n(v.max)}</td>
+            <td className={tdn}>{n(v.media)}</td>
+            <td className={tdn}>{n(v.de)}</td>
           </tr>
         ))}
       </Tabla>
 
-      <Tabla
-        titulo="Tabla 2 — ICH por sitio"
-        nota="La dispersión del ICH es de otro orden en un sitio que en los otros: es el efecto techo que discute el trabajo."
-        cabeceras={["Sitio", "n", "ICH (media ± DE)"]}
-        alineDerecha={[1, 2]}
-      >
+      <Tabla numero={2} titulo="Media y desviación estándar del ICH por sitio de procedencia."
+        cabeceras={["Sitio", "n", "μ", "σ"]} alineDerecha={[1, 2, 3]}>
         {a.ichPorSitio.map((s) => (
           <tr key={s.sitio}>
             <td className={td}>{s.sitio}</td>
             <td className={tdn}>{s.n}</td>
-            <td className={tdn}>{n(s.media)} ± {n(s.de)}</td>
+            <td className={tdn}>{n(s.media)}</td>
+            <td className={tdn}>{n(s.de)}</td>
           </tr>
         ))}
       </Tabla>
 
-      <Tabla
-        titulo="Tablas 3 y 4 — Concordancia entre Zonación e IPO"
-        nota={`Global sobre ${c.global.denominador} zonas · núcleo sobre ${c.nucleo.denominador}. Manos y pies casi no entran en el IPO: al sacarlos, la concordancia sube.`}
-        cabeceras={["Estadístico", "Global (/635)", "Núcleo (/363)"]}
-        alineDerecha={[1, 2]}
-      >
-        {conc.map(([lbl, g, nu]) => (
-          <tr key={lbl}>
-            <td className={td}>{lbl}</td>
-            <td className={tdn}>{g}</td>
-            <td className={tdn}>{nu}</td>
-          </tr>
+      <Tabla numero={3}
+        titulo={`Concordancia entre la completitud por zonación y el IPO sobre el denominador completo de ${c.global.denominador} zonas (n=${c.global.n}).`}
+        cabeceras={["Estadístico", "Valor"]} alineDerecha={[1]}>
+        {concordancia(c.global).map(([k, v]) => (
+          <tr key={k}><td className={td}>{k}</td><td className={tdn}>{v}</td></tr>
         ))}
-        <tr>
-          <td className={td}>Pendiente del sesgo</td>
-          <td className={tdn}>
-            {n(c.global.pendiente, 3)} <span className="text-faint">(p {p(c.global.pendienteP)})</span>
-          </td>
-          <td className={tdn}>
-            {n(c.nucleo.pendiente, 3)} <span className="text-faint">(p = {n(c.nucleo.pendienteP, 3)})</span>
-          </td>
-        </tr>
+      </Tabla>
+
+      <Tabla numero={4}
+        titulo={`Concordancia sobre el núcleo de ${c.nucleo.denominador} zonas, excluidas manos y pies (n=${c.nucleo.n}).`}
+        cabeceras={["Estadístico", "Valor"]} alineDerecha={[1]}>
+        {concordancia(c.nucleo).map(([k, v]) => (
+          <tr key={k}><td className={td}>{k}</td><td className={tdn}>{v}</td></tr>
+        ))}
       </Tabla>
 
       {nucleoNoSignificativo && (
@@ -176,115 +190,118 @@ export default function TablasTFM() {
           <b className="text-ink">La pendiente residual sobre el núcleo queda en el límite de la significación</b>{" "}
           <span className="text-muted">
             (p = {n(c.nucleo.pendienteP, 3)}, n = {c.nucleo.n}): no alcanza el umbral convencional de
-            0,05. En el control que excluye los casos de completitud extrema
-            (n = {c.controlSinExtremos.nucleo.n}) la pendiente es {n(c.controlSinExtremos.nucleo.pendiente, 3)}{" "}
-            con p = {n(c.controlSinExtremos.nucleo.pendienteP, 3)}.
+            0,05. En el control sin los casos de completitud extrema (n = {ce.nucleo.n}) la pendiente
+            es {n(ce.nucleo.pendiente, 3)} con p = {n(ce.nucleo.pendienteP, 3)}.
           </span>
         </div>
       )}
 
-      <Tabla
-        titulo="Tabla 5 — EAT en función de IPO e ICH"
-        nota="El incremento de R² es lo que mide si el ICH aporta información propia, no redundante con la sola presencia ósea."
-        cabeceras={["Magnitud", "Valor"]}
-        alineDerecha={[1]}
-      >
-        <tr><td className={td}>Diferencia media entre EAT y (100 − IPO)</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.diferenciaMediaEatVsPresencia)} pts (± {n(a.relacionEatIpoIch.deDiferencia)})</td></tr>
-        <tr><td className={td}>… como proporción del EAT medio</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.pctDelEatMedio, 1)} %</td></tr>
-        <tr><td className={td}>ρ de Spearman, ICH ↔ IPO</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.rhoIchIpo, 3)}</td></tr>
-        <tr><td className={td}>R² del EAT explicado sólo por el IPO</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.r2EatPorIpo, 3)}</td></tr>
-        <tr><td className={td}>R² del EAT explicado sólo por el ICH</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.r2EatPorIch, 3)}</td></tr>
-        <tr><td className={td}>R² con ambos predictores</td>
-            <td className={tdn}>{n(a.relacionEatIpoIch.r2Conjunto, 3)}</td></tr>
-        <tr><td className={`${td} font-semibold text-ink`}>Incremento de R² que aporta el ICH</td>
-            <td className={`${tdn} font-semibold text-ink`}>{n(a.relacionEatIpoIch.incrementoR2, 3)}</td></tr>
+      <Tabla numero={5}
+        titulo={`Comparación de los estadísticos de concordancia con los ${c.global.n} individuos y excluyendo a los de menos del 5 % del esqueleto recuperado.`}
+        nota={`Excluidos: ${ce.excluidos.map((e) => corto(e.codigo)).join(", ")}.`}
+        cabeceras={["Estadístico", `Con los ${c.global.n}`, `Sin extremos (n=${ce.global.n})`]}
+        alineDerecha={[1, 2]}>
+        <tr><td className={td}>r de Pearson (/635)</td>
+          <td className={tdn}>{n(c.global.rPearson, 3)}</td><td className={tdn}>{n(ce.global.rPearson, 3)}</td></tr>
+        <tr><td className={td}>CCC de Lin (/635)</td>
+          <td className={tdn}>{n(c.global.cccLin, 3)}</td><td className={tdn}>{n(ce.global.cccLin, 3)}</td></tr>
+        <tr><td className={td}>Pendiente (/635)</td>
+          <td className={tdn}>{n(c.global.pendiente, 3)}</td><td className={tdn}>{n(ce.global.pendiente, 3)}</td></tr>
+        <tr><td className={td}>CCC de Lin (núcleo)</td>
+          <td className={tdn}>{n(c.nucleo.cccLin, 3)}</td><td className={tdn}>{n(ce.nucleo.cccLin, 3)}</td></tr>
+        <tr><td className={td}>Pendiente (núcleo)</td>
+          <td className={tdn}>{pendiente(c.nucleo.pendiente, c.nucleo.pendienteP)}</td>
+          <td className={tdn}>{pendiente(ce.nucleo.pendiente, ce.nucleo.pendienteP)}</td></tr>
       </Tabla>
 
-      <Tabla
-        titulo="Tabla 6 — Efecto del sitio (Kruskal-Wallis)"
-        nota="η²_H es el tamaño de efecto. El sitio pesa mucho más sobre los índices del EAT y sobre el núcleo que sobre la completitud global, donde manos y pies diluyen la señal."
-        cabeceras={["Índice", "H", "gl", "η²_H", "p"]}
-        alineDerecha={[1, 2, 3, 4]}
-      >
+      <Tabla numero={6}
+        titulo="Proporción de la varianza del EAT explicada por el IPO y el ICH, por separado y en conjunto (R²)."
+        nota={`El manuscrito no lo tabula, pero el dato que sostiene el argumento está acá: IPO e ICH correlacionan entre sí (ρ de Spearman = ${n(rel.rhoIchIpo, 3)}), y por eso hace falta el R² incremental para decidir si el ICH aporta algo propio.`}
+        cabeceras={["Modelo", "R²"]} alineDerecha={[1]}>
+        <tr><td className={td}>IPO</td><td className={tdn}>{n(rel.r2EatPorIpo, 3)}</td></tr>
+        <tr><td className={td}>ICH</td><td className={tdn}>{n(rel.r2EatPorIch, 3)}</td></tr>
+        <tr><td className={td}>IPO + ICH</td><td className={tdn}>{n(rel.r2Conjunto, 3)}</td></tr>
+        <tr><td className={`${td} font-semibold text-ink`}>Incremento sobre el modelo con IPO</td>
+          <td className={`${tdn} font-semibold text-ink`}>{n(rel.incrementoR2, 3)}</td></tr>
+      </Tabla>
+
+      <Tabla numero={7}
+        titulo={`Efecto del sitio de procedencia sobre el ICH, el EAT, el IPO y la completitud en sus dos versiones (Kruskal-Wallis, n=${c.global.n}).`}
+        cabeceras={["Variable", "H", "p", "η²_H"]} alineDerecha={[1, 2, 3]}>
         {a.variabilidadPorSitio.map((k) => (
           <tr key={k.variable}>
-            <td className={td}>{k.variable}</td>
+            <td className={td}>{ETIQUETA_KW[k.variable] ?? k.variable}</td>
             <td className={tdn}>{n(k.H)}</td>
-            <td className={tdn}>{k.gl}</td>
-            <td className={tdn}>{n(k.etaCuadradoH, 3)}</td>
             <td className={tdn}>{p(k.p)}</td>
+            <td className={tdn}>{n(k.etaCuadradoH, 3)}</td>
           </tr>
         ))}
       </Tabla>
 
-      <Tabla
-        titulo="Tabla 7 — Completitud por elemento"
-        nota="«% en 0» y «% en 100» son la proporción de individuos en cada extremo. El peso es la participación del elemento en las 635 zonas."
-        cabeceras={["Elemento", "Tejido", "Completitud media", "% en 0", "% en 100", "Peso"]}
-        alineDerecha={[2, 3, 4, 5]}
-      >
-        {[...a.porElemento]
-          .sort((x, y) => y.completitudMedia - x.completitudMedia)
-          .map((e) => (
-            <tr key={e.clave}>
-              <td className={td}>{e.etiqueta}</td>
-              <td className={`${td} text-xs text-muted`}>{e.tejido}</td>
-              <td className={tdn}>{n(e.completitudMedia)} %</td>
-              <td className={tdn}>{n(e.pctEn0, 1)} %</td>
-              <td className={tdn}>{n(e.pctEn100, 1)} %</td>
-              <td className={tdn}>{n(e.pctDelDenominador, 2)} %</td>
-            </tr>
-          ))}
+      <Tabla numero={8}
+        titulo={`Completitud media por elemento anatómico sobre los ${c.global.n} individuos, agrupada según el tejido óseo predominante y ordenada de menor a mayor.`}
+        nota={cve
+          ? `Comparación entre grupos (Mann-Whitney): U = ${n(cve.U, 0)}, p = ${n(cve.pDosColas, 4)}. Media del esponjoso ${n(cve.mediaEsponjoso, 1)} % frente a ${n(cve.mediaCortical, 1)} % del cortical.`
+          : undefined}
+        cabeceras={["Elemento", "Completitud media (%)"]} alineDerecha={[1]}>
+        <tr><td className={tdGrupo} colSpan={2}>Hueso esponjoso o de paredes finas</td></tr>
+        {porTejido("esponjoso").map((e) => (
+          <tr key={e.clave}><td className={td}>{e.etiqueta}</td><td className={tdn}>{n(e.completitudMedia)}</td></tr>
+        ))}
+        <tr><td className={tdGrupo} colSpan={2}>Hueso cortical compacto</td></tr>
+        {porTejido("cortical").map((e) => (
+          <tr key={e.clave}><td className={td}>{e.etiqueta}</td><td className={tdn}>{n(e.completitudMedia)}</td></tr>
+        ))}
       </Tabla>
 
-      {a.corticalVsEsponjoso !== null && (() => {
-        const cve = a.corticalVsEsponjoso;
-        return (
-      <Tabla
-        titulo="Tejido cortical frente a esponjoso (Mann-Whitney)"
-        nota="El orden de conservación sigue la densidad ósea — el principio que el trabajo cita como marco interpretativo, contrastado sobre los datos propios."
-        cabeceras={["Grupo", "n elementos", "Completitud media"]}
-        alineDerecha={[1, 2]}
-      >
-        <tr><td className={td}>Cortical</td>
-            <td className={tdn}>{cve.nCortical}</td>
-            <td className={tdn}>{n(cve.mediaCortical, 1)} %</td></tr>
-        <tr><td className={td}>Esponjoso</td>
-            <td className={tdn}>{cve.nEsponjoso}</td>
-            <td className={tdn}>{n(cve.mediaEsponjoso, 1)} %</td></tr>
-        <tr><td className={`${td} font-semibold text-ink`}>U de Mann-Whitney</td>
-            <td className={tdn} />
-            <td className={`${tdn} font-semibold text-ink`}>
-              {n(cve.U, 0)} (p = {n(cve.pDosColas, 4)})
-            </td></tr>
+      <Tabla numero={9} titulo="Completitud media de manos y pies frente a la del núcleo, por sitio de procedencia."
+        cabeceras={["Sitio", "n", "Manos + pies", "Núcleo", "Brecha (pp)"]} alineDerecha={[1, 2, 3, 4]}>
+        {wil.map((w) => (
+          <tr key={w.sitio}>
+            <td className={td}>{w.sitio}</td>
+            <td className={tdn}>{w.n}</td>
+            <td className={tdn}>{n(w.manosPiesMedia)} %</td>
+            <td className={tdn}>{n(w.nucleoMedia)} %</td>
+            <td className={tdn}>{w.brechaPp > 0 ? "+" : ""}{n(w.brechaPp)}</td>
+          </tr>
+        ))}
       </Tabla>
-        );
-      })()}
 
-      {a.manosPiesVsNucleo.wilcoxonPorSitio.length > 0 && (
-        <Tabla
-          titulo="Manos y pies frente al núcleo (Wilcoxon pareado, por sitio)"
-          nota={`Comparación intra-individuo. Criterio del subconjunto: ${a.manosPiesVsNucleo.criterio}.`}
-          cabeceras={["Sitio", "n", "Manos y pies", "Núcleo", "Brecha", "p", "Con m+p mayor"]}
-          alineDerecha={[1, 2, 3, 4, 5, 6]}
-        >
-          {a.manosPiesVsNucleo.wilcoxonPorSitio.map((w) => (
-            <tr key={w.sitio}>
-              <td className={td}>{w.sitio}</td>
-              <td className={tdn}>{w.n}</td>
-              <td className={tdn}>{n(w.manosPiesMedia, 1)} %</td>
-              <td className={tdn}>{n(w.nucleoMedia, 1)} %</td>
-              <td className={tdn}>{n(w.brechaPp, 1)} pp</td>
-              <td className={tdn}>{p(w.p)}</td>
-              <td className={tdn}>{w.individuosManosPiesMayor} / {w.n}</td>
-            </tr>
-          ))}
-        </Tabla>
+      <Tabla numero={10}
+        titulo="Comparación de la completitud de manos y pies frente a la del núcleo dentro de cada individuo (Wilcoxon de rangos signados)."
+        nota={`Subconjunto: ${a.manosPiesVsNucleo.criterio}.`}
+        cabeceras={["Sitio", "n", "Diferencia media (pp)", "p", "Manos+pies > núcleo"]}
+        alineDerecha={[1, 2, 3, 4]}>
+        {wil.map((w) => (
+          <tr key={w.sitio}>
+            <td className={td}>{w.sitio}</td>
+            <td className={tdn}>{w.n}</td>
+            <td className={tdn}>{w.brechaPp > 0 ? "+" : ""}{n(w.brechaPp)}</td>
+            <td className={tdn}>{p(w.p)}</td>
+            <td className={tdn}>{w.individuosManosPiesMayor} de {w.n}</td>
+          </tr>
+        ))}
+      </Tabla>
+
+      {disc && (
+      <Tabla numero={11}
+        titulo={`Registro de vértebras y costillas por individuo en los ${disc.total} casos de discrepancia entre la zonación y el IPO.`}
+        nota={`Criterio: la zonación registra cero y el EAT registra presencia. ${disc.enVertebras} en vértebras, ${disc.enCostillas} en costillas; ${n(disc.pctDeLaMuestra, 1)} % de la muestra${disc.fueraDelSitioDominante === 0 && disc.casos.length ? `, todos de ${disc.casos[0].sitio}` : ""}.`}
+        cabeceras={["Individuo", "Vért. zonación", "Vért. IPO", "Cost. zonación", "Cost. IPO"]}
+        alineDerecha={[1, 2, 3, 4]}>
+        {disc.casos.map((k) => (
+          <tr key={k.codigo}>
+            <td className={td} title={k.codigo}>{corto(k.codigo)}</td>
+            <td className={tdn}>{k.vertebrasZonacion}/{k.vertebrasZonacionMax}</td>
+            <td className={tdn}>{k.vertebrasEat}/{k.vertebrasEatMax}</td>
+            <td className={tdn}>{k.costillasZonacion}/{k.costillasZonacionMax}</td>
+            <td className={tdn}>{k.costillasEat}/{k.costillasEatMax}</td>
+          </tr>
+        ))}
+        {disc.casos.length === 0 && (
+          <tr><td className={td} colSpan={5}>Sin discrepancias registradas.</td></tr>
+        )}
+      </Tabla>
       )}
 
       {a.diagnostico.filasConReconstruccionIncoherente > 0 && (

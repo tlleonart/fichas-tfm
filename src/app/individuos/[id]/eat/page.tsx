@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import ExportPDF from "@/components/ExportPDF";
 
 const EATForm = dynamic(() => import("@/components/EATForm"), { ssr: false });
 
@@ -70,7 +69,11 @@ export default function EATFichaPage() {
             {individuo.codigoCanonico} · Serrulla &amp; Vázquez (2019)
           </p>
         </div>
-        {existing && <ExportPDF targetId="ficha-content" filename={`eat-${individuo.codigoCanonico}.pdf`} />}
+        {existing && (
+          <Link href={`/individuos/${id}/documento?tipo=eat`} className="btn btn-ghost">
+            Documento imprimible
+          </Link>
+        )}
       </header>
 
       {error && (

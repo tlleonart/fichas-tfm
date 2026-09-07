@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import ExportPDF from "@/components/ExportPDF";
 
 const ZonacionForm = dynamic(() => import("@/components/ZonacionForm"), { ssr: false });
 
@@ -70,7 +69,11 @@ export default function ZonacionFichaPage() {
             {individuo.codigoCanonico} · Knüsel &amp; Outram (2004)
           </p>
         </div>
-        {existing && <ExportPDF targetId="ficha-content" filename={`zonacion-${individuo.codigoCanonico}.pdf`} />}
+        {existing && (
+          <Link href={`/individuos/${id}/documento?tipo=zonacion`} className="btn btn-ghost">
+            Documento imprimible
+          </Link>
+        )}
       </header>
 
       {error && (

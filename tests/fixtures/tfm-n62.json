@@ -1,0 +1,2611 @@
+{
+ "_nota": "Fixture del gate estadístico. Dataset DE-IDENTIFICADO del TFM (n=62). NO contiene codigoCanonico, fosa, UF ni número de individuo: solo el sitio y las métricas ya calculadas y persistidas por lib/metrics.ts. Este repo es público; no agregar identificadores acá. Regenerar: npx convex run analisis:dashboard + scripts/ (ver HANDOFF).",
+ "_fuente": "Convex prod vibrant-otter-229, snapshot 2026-09-01",
+ "n": 62,
+ "filas": [
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 79.7,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 55.6,
+     "hand_zones": 49.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 506,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 96.21,
+    "ich": 96.11,
+    "eat": 7.53,
+    "totalPresent": 110.64
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 89.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 86.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 69,
+     "hand_zones": 85.4,
+     "humerus_zones": 95.5,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 568,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 96.19,
+    "ich": 90.63,
+    "eat": 12.82,
+    "totalPresent": 110.62
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 90.7,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 81,
+     "hand_zones": 76.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 576,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 97.86,
+    "ich": 96.11,
+    "eat": 5.95,
+    "totalPresent": 112.54
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 92.1,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 80.3,
+     "hand_zones": 83.8,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 585,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 96.37,
+    "ich": 97.5,
+    "eat": 6.04,
+    "totalPresent": 110.82
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 94.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 90.1,
+     "hand_zones": 82.3,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 598,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 1,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.23,
+    "ich": 96.67,
+    "eat": 4.08,
+    "totalPresent": 114.12
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 94.6,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 91.7,
+     "foot_zones": 89.4,
+     "hand_zones": 93.8,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 91.7,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 96.9
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 601,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 87.28,
+    "ich": 96.43,
+    "eat": 15.83,
+    "totalPresent": 100.38
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 95.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 82.4,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 606,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 96.71,
+    "ich": 98.33,
+    "eat": 4.9,
+    "totalPresent": 111.22
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 95.9,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 85.2,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 99
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 609,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 96.35,
+    "ich": 95.63,
+    "eat": 7.87,
+    "totalPresent": 110.8
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 97.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 93,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 621,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.81,
+    "ich": 95,
+    "eat": 5.18,
+    "totalPresent": 114.78
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 98.1,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 91.5,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 623,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 100,
+    "ich": 99.44,
+    "eat": 0.56,
+    "totalPresent": 115
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 99.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 632,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 83.48,
+    "ich": 98.57,
+    "eat": 17.71,
+    "totalPresent": 96
+   }
+  },
+  {
+   "sitio": "Albarracín",
+   "zonacion": {
+    "completitudGlobal": 99.7,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 93.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 633,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.26,
+    "ich": 97.5,
+    "eat": 4.2,
+    "totalPresent": 113
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 2.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 0,
+     "cranium_zones": 0,
+     "femur_zones": 0,
+     "fibula_zones": 0,
+     "foot_zones": 0,
+     "hand_zones": 5.4,
+     "humerus_zones": 18.2,
+     "mandible_zones": 0,
+     "os_coxae_zones": 0,
+     "patella_zones": 0,
+     "radius_zones": 0,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 5.6,
+     "sternum_zones": 0,
+     "tibia_zones": 0,
+     "ulna_zones": 11.1,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 4,
+    "zonasPresentes": 14,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 3.41,
+    "ich": 6.25,
+    "eat": 99.79,
+    "totalPresent": 3.92
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 3,
+    "completitudPorElemento": {
+     "clavicle_zones": 0,
+     "cranium_zones": 0,
+     "femur_zones": 0,
+     "fibula_zones": 0,
+     "foot_zones": 0,
+     "hand_zones": 8.5,
+     "humerus_zones": 0,
+     "mandible_zones": 0,
+     "os_coxae_zones": 0,
+     "patella_zones": 50,
+     "radius_zones": 31.8,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 0,
+     "sternum_zones": 0,
+     "tibia_zones": 0,
+     "ulna_zones": 0,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 3,
+    "zonasPresentes": 19,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 4.2,
+    "ich": 6.25,
+    "eat": 99.74,
+    "totalPresent": 4.83
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 56.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 26.7,
+     "femur_zones": 63.6,
+     "fibula_zones": 75,
+     "foot_zones": 81,
+     "hand_zones": 86.2,
+     "humerus_zones": 77.3,
+     "mandible_zones": 28.6,
+     "os_coxae_zones": 16.7,
+     "patella_zones": 100,
+     "radius_zones": 90.9,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 77.8,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 15,
+    "zonasPresentes": 359,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 36.83,
+    "ich": 57.5,
+    "eat": 78.82,
+    "totalPresent": 42.36
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 59.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 20,
+     "femur_zones": 100,
+     "fibula_zones": 83.3,
+     "foot_zones": 95.8,
+     "hand_zones": 89.2,
+     "humerus_zones": 81.8,
+     "mandible_zones": 0,
+     "os_coxae_zones": 0,
+     "patella_zones": 100,
+     "radius_zones": 86.4,
+     "rib_zones": 0,
+     "sacrum_zones": 50,
+     "scapula_zones": 33.3,
+     "sternum_zones": 33.3,
+     "tibia_zones": 100,
+     "ulna_zones": 83.3,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 14,
+    "zonasPresentes": 376,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 47.42,
+    "ich": 45,
+    "eat": 78.66,
+    "totalPresent": 54.53
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 60.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 33.3,
+     "femur_zones": 54.5,
+     "fibula_zones": 66.7,
+     "foot_zones": 95.1,
+     "hand_zones": 96.2,
+     "humerus_zones": 81.8,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 8.3,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 25,
+     "scapula_zones": 50,
+     "sternum_zones": 33.3,
+     "tibia_zones": 70,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 384,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 33.82,
+    "ich": 60,
+    "eat": 79.71,
+    "totalPresent": 38.89
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 60.9,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 13.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 90,
+     "humerus_zones": 100,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 0,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 0,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 13,
+    "zonasPresentes": 387,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 33.24,
+    "ich": 57.14,
+    "eat": 81.01,
+    "totalPresent": 38.22
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 63.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 66.7,
+     "cranium_zones": 60,
+     "femur_zones": 90.9,
+     "fibula_zones": 83.3,
+     "foot_zones": 91.5,
+     "hand_zones": 92.3,
+     "humerus_zones": 86.4,
+     "mandible_zones": 71.4,
+     "os_coxae_zones": 83.3,
+     "patella_zones": 100,
+     "radius_zones": 90.9,
+     "rib_zones": 0,
+     "sacrum_zones": 75,
+     "scapula_zones": 66.7,
+     "sternum_zones": 66.7,
+     "tibia_zones": 50,
+     "ulna_zones": 88.9,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 402,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 69.95,
+    "ich": 56.67,
+    "eat": 60.36,
+    "totalPresent": 80.44
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 64.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 73.3,
+     "femur_zones": 90.9,
+     "fibula_zones": 100,
+     "foot_zones": 83.1,
+     "hand_zones": 89.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 25,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 8.3
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 409,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 46.31,
+    "ich": 57.5,
+    "eat": 73.37,
+    "totalPresent": 53.26
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 65.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 83.3,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 78.9,
+     "hand_zones": 96.9,
+     "humerus_zones": 68.2,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 95.5,
+     "rib_zones": 0,
+     "sacrum_zones": 0,
+     "scapula_zones": 61.1,
+     "sternum_zones": 66.7,
+     "tibia_zones": 50,
+     "ulna_zones": 61.1,
+     "vertebrae_zones": 29.2
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 414,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 64.75,
+    "ich": 77.78,
+    "eat": 49.64,
+    "totalPresent": 74.46
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 67.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 73.3,
+     "femur_zones": 50,
+     "fibula_zones": 66.7,
+     "foot_zones": 93.7,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 0,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 50,
+     "scapula_zones": 77.8,
+     "sternum_zones": 66.7,
+     "tibia_zones": 50,
+     "ulna_zones": 100,
+     "vertebrae_zones": 33.3
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 427,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 71.59,
+    "ich": 61.88,
+    "eat": 55.7,
+    "totalPresent": 82.33
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 67.6,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 81,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 25,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 33.3,
+     "tibia_zones": 85,
+     "ulna_zones": 100,
+     "vertebrae_zones": 20.8
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 429,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 55.47,
+    "ich": 63.13,
+    "eat": 64.99,
+    "totalPresent": 63.79
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 68.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 83.3,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 94.6,
+     "humerus_zones": 100,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 0,
+     "patella_zones": 100,
+     "radius_zones": 90.9,
+     "rib_zones": 8.3,
+     "sacrum_zones": 25,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 88.9,
+     "vertebrae_zones": 8.3
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 433,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 50.81,
+    "ich": 52.5,
+    "eat": 73.33,
+    "totalPresent": 58.43
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 68.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 93.1,
+     "humerus_zones": 90.9,
+     "mandible_zones": 71.4,
+     "os_coxae_zones": 33.3,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 75,
+     "scapula_zones": 88.9,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 435,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 61.47,
+    "ich": 68.57,
+    "eat": 57.85,
+    "totalPresent": 70.69
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 68.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 83.1,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 100,
+     "scapula_zones": 66.7,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 437,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 48.6,
+    "ich": 69.38,
+    "eat": 66.28,
+    "totalPresent": 55.89
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 68.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 83.3,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 89.4,
+     "hand_zones": 93.1,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 25,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 50,
+     "scapula_zones": 100,
+     "sternum_zones": 33.3,
+     "tibia_zones": 100,
+     "ulna_zones": 83.3,
+     "vertebrae_zones": 29.2
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 437,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 52.85,
+    "ich": 61.43,
+    "eat": 67.53,
+    "totalPresent": 60.78
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 70.1,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 75,
+     "foot_zones": 100,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 83.3,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 0,
+     "sacrum_zones": 50,
+     "scapula_zones": 77.8,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 16,
+    "zonasPresentes": 445,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 43.29,
+    "ich": 63.75,
+    "eat": 72.41,
+    "totalPresent": 49.78
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 77.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 50,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 87.3,
+     "hand_zones": 89.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 90.9,
+     "rib_zones": 100,
+     "sacrum_zones": 75,
+     "scapula_zones": 88.9,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 490,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 89.76,
+    "ich": 66.25,
+    "eat": 40.54,
+    "totalPresent": 103.22
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 77.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 40,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 91.5,
+     "hand_zones": 88.5,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 61.1,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 492,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 66.67,
+    "ich": 66.25,
+    "eat": 55.83,
+    "totalPresent": 76.67
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 78.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 95.4,
+     "humerus_zones": 100,
+     "mandible_zones": 57.1,
+     "os_coxae_zones": 4.2,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 94.4,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 497,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 88.5,
+    "ich": 64.38,
+    "eat": 43.03,
+    "totalPresent": 101.78
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 79.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 53.3,
+     "femur_zones": 90.9,
+     "fibula_zones": 100,
+     "foot_zones": 93.7,
+     "hand_zones": 97.7,
+     "humerus_zones": 90.9,
+     "mandible_zones": 100,
+     "os_coxae_zones": 79.2,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 70,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 504,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 93.04,
+    "ich": 60.56,
+    "eat": 43.66,
+    "totalPresent": 107
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 80.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 33.3,
+     "femur_zones": 86.4,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 70.8,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 50,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 29.2
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 510,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 63.48,
+    "ich": 55.56,
+    "eat": 64.73,
+    "totalPresent": 73
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 81.9,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 89.4,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 94.4,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 0
+    },
+    "elementosPresentes": 17,
+    "zonasPresentes": 520,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 78.94,
+    "ich": 86.11,
+    "eat": 32.03,
+    "totalPresent": 90.78
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 82.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 66.7,
+     "cranium_zones": 86.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 91.5,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 20.8,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 80,
+     "ulna_zones": 100,
+     "vertebrae_zones": 29.2
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 523,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 78.96,
+    "ich": 78.89,
+    "eat": 37.71,
+    "totalPresent": 90.8
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 82.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 83.3,
+     "cranium_zones": 46.7,
+     "femur_zones": 90.9,
+     "fibula_zones": 100,
+     "foot_zones": 89.4,
+     "hand_zones": 97.7,
+     "humerus_zones": 95.5,
+     "mandible_zones": 100,
+     "os_coxae_zones": 66.7,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 29.2
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 526,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 73.72,
+    "ich": 67.22,
+    "eat": 50.44,
+    "totalPresent": 84.78
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 83.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 73.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 97.9,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 57.1,
+     "os_coxae_zones": 100,
+     "patella_zones": 50,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 50,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 8.3
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 530,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 70.43,
+    "ich": 68.33,
+    "eat": 51.87,
+    "totalPresent": 81
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 86.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 50,
+     "fibula_zones": 100,
+     "foot_zones": 93.7,
+     "hand_zones": 94.6,
+     "humerus_zones": 81.8,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 81.8,
+     "rib_zones": 79.2,
+     "sacrum_zones": 100,
+     "scapula_zones": 94.4,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 70.8
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 548,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 88.39,
+    "ich": 68.89,
+    "eat": 39.11,
+    "totalPresent": 101.65
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 89.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 33.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 87.3,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 91.7,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 66.7
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 570,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 89.1,
+    "ich": 65,
+    "eat": 42.08,
+    "totalPresent": 102.47
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 90.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 70.4,
+     "hand_zones": 94.6,
+     "humerus_zones": 100,
+     "mandible_zones": 28.6,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 573,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 89.35,
+    "ich": 79.38,
+    "eat": 29.08,
+    "totalPresent": 102.76
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 91.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 79.6,
+     "hand_zones": 87.7,
+     "humerus_zones": 81.8,
+     "mandible_zones": 100,
+     "os_coxae_zones": 75,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 579,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.66,
+    "ich": 86.11,
+    "eat": 15.05,
+    "totalPresent": 113.46
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 92.9,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 33.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 93.7,
+     "hand_zones": 95.4,
+     "humerus_zones": 86.4,
+     "mandible_zones": 100,
+     "os_coxae_zones": 91.7,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 94.4,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 89.6
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 590,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 88.25,
+    "ich": 68.33,
+    "eat": 39.7,
+    "totalPresent": 101.49
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 95.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 53.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 96.2,
+     "humerus_zones": 100,
+     "mandible_zones": 71.4,
+     "os_coxae_zones": 91.7,
+     "patella_zones": 100,
+     "radius_zones": 77.3,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 605,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 90.16,
+    "ich": 86.67,
+    "eat": 21.86,
+    "totalPresent": 103.69
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 97.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 83.3,
+     "cranium_zones": 73.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 85.7,
+     "os_coxae_zones": 87.5,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 619,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 92.51,
+    "ich": 62.22,
+    "eat": 42.44,
+    "totalPresent": 106.39
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 97.5,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 46.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 98.5,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 619,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 89.35,
+    "ich": 75.56,
+    "eat": 32.49,
+    "totalPresent": 102.75
+   }
+  },
+  {
+   "sitio": "Castellón",
+   "zonacion": {
+    "completitudGlobal": 98.7,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 86.7,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 71.4,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 627,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 93.82,
+    "ich": 91.11,
+    "eat": 14.52,
+    "totalPresent": 107.89
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 83.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 59.9,
+     "hand_zones": 64.6,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 532,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 97.5,
+    "ich": 88.89,
+    "eat": 13.33,
+    "totalPresent": 112.13
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 88.8,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 85.2,
+     "hand_zones": 64.6,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 564,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 97.5,
+    "ich": 94.44,
+    "eat": 7.91,
+    "totalPresent": 112.13
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 89.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 62,
+     "hand_zones": 90,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 568,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 1,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.14,
+    "ich": 97.22,
+    "eat": 3.62,
+    "totalPresent": 114.01
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 91.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 72.5,
+     "hand_zones": 86.9,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 579,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.78,
+    "ich": 96.11,
+    "eat": 5.06,
+    "totalPresent": 113.59
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 92,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 93.3,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 78.9,
+     "hand_zones": 84.6,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 584,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.47,
+    "ich": 95,
+    "eat": 6.45,
+    "totalPresent": 113.24
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 93.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 72.5,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 592,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.47,
+    "ich": 95,
+    "eat": 5.5,
+    "totalPresent": 114.39
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 95,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 97.9,
+     "hand_zones": 79.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 98.6,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 603,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.91,
+    "ich": 96.67,
+    "eat": 4.38,
+    "totalPresent": 113.75
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 95.1,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 83.1,
+     "hand_zones": 95.4,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 604,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.81,
+    "ich": 98.33,
+    "eat": 1.86,
+    "totalPresent": 114.78
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 95.1,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 78.2,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 604,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.74,
+    "ich": 98.89,
+    "eat": 1.37,
+    "totalPresent": 114.7
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 95.7,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 85.2,
+     "hand_zones": 95.4,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 608,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 98.83,
+    "ich": 96.67,
+    "eat": 4.46,
+    "totalPresent": 113.66
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 95.9,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 83.1,
+     "hand_zones": 98.5,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 609,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.33,
+    "ich": 96.67,
+    "eat": 3.98,
+    "totalPresent": 114.23
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 97,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 90.8,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 616,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 100,
+    "ich": 99.44,
+    "eat": 0.56,
+    "totalPresent": 115
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 97.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 87.3,
+     "hand_zones": 100,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 100,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 617,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.91,
+    "ich": 96.11,
+    "eat": 3.97,
+    "totalPresent": 114.9
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 97.2,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 91.5,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 97.9
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 617,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.9,
+    "ich": 95.56,
+    "eat": 4.54,
+    "totalPresent": 114.89
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 98.3,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 95.8,
+     "hand_zones": 99.2,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 95.8,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 624,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.13,
+    "ich": 96.67,
+    "eat": 4.17,
+    "totalPresent": 114
+   }
+  },
+  {
+   "sitio": "Villar",
+   "zonacion": {
+    "completitudGlobal": 99.4,
+    "completitudPorElemento": {
+     "clavicle_zones": 100,
+     "cranium_zones": 100,
+     "femur_zones": 100,
+     "fibula_zones": 100,
+     "foot_zones": 100,
+     "hand_zones": 97.7,
+     "humerus_zones": 100,
+     "mandible_zones": 100,
+     "os_coxae_zones": 100,
+     "patella_zones": 100,
+     "radius_zones": 100,
+     "rib_zones": 100,
+     "sacrum_zones": 100,
+     "scapula_zones": 100,
+     "sternum_zones": 66.7,
+     "tibia_zones": 100,
+     "ulna_zones": 100,
+     "vertebrae_zones": 100
+    },
+    "elementosPresentes": 18,
+    "zonasPresentes": 631,
+    "ffi": {
+     "frescas": 0,
+     "media": null,
+     "n": 0,
+     "secas": 0
+    },
+    "alteracionesCount": 0,
+    "fragmentosCount": 0
+   },
+   "eat": {
+    "ipo": 99.81,
+    "ich": 95,
+    "eat": 5.18,
+    "totalPresent": 114.78
+   }
+  }
+ ]
+}

@@ -89,6 +89,7 @@ type MetodoFiltro = "todos" | "ambos" | "zon" | "eat" | "revisiones";
 
 export default function DatosPage() {
   const rows = useQuery(api.analisis.dashboard, {}) as unknown as DashRow[] | undefined;
+  const desglose = useQuery(api.analisis.desglosePorElemento, {});
 
   const [fSitio, setFSitio] = useState("");
   const [fFosa, setFFosa] = useState("");
@@ -185,6 +186,49 @@ export default function DatosPage() {
       "application/json",
     );
   }
+  /**
+   * Desglose por elemento: una fila por individuo, una columna por elemento, en
+   * enteros de zonas con la lateralidad sumada. Lleva una fila de máximos para poder
+   * pasar a porcentaje, y la completitud del núcleo ya calculada como comprobación.
+   *
+   * No respeta el filtro de la pantalla a propósito: es el desglose de la muestra
+   * completa, que es como se usa para reproducir las tablas del trabajo.
+   */
+  function exportDesgloseCSV() {
+    if (!desglose) return;
+    const claves = Object.keys(desglose.maximos);
+    const etiquetas = desglose.etiquetas as Record<string, string>;
+    const headers = [
+      "Código", "Sitio",
+      ...claves.map((k) => etiquetas[k] ?? k),
+      `Zonas núcleo (/${desglose.denominadores.nucleo})`,
+      "Completitud núcleo (%)",
+      `Zonas totales (/${desglose.denominadores.total})`,
+    ];
+    const maximos = desglose.maximos as Record<string, number>;
+    const filaMax = [
+      "MÁXIMO POR ELEMENTO", "",
+      ...claves.map((k) => maximos[k]),
+      desglose.denominadores.nucleo, 100, desglose.denominadores.total,
+    ];
+    const data = [
+      filaMax,
+      ...desglose.filas.map((f) => [
+        f.codigo, f.sitio,
+        ...claves.map((k) => (f.zonas as Record<string, number>)[k] ?? 0),
+        f.zonasNucleo,
+        String(f.completitudNucleo).replace(".", ","),
+        f.zonasTotales,
+      ]),
+    ];
+    // BOM: sin él, Excel abre los acentos mal.
+    download(
+      `registro-osteologico_desglose-elemento_${HOY()}.csv`,
+      "﻿" + toCSV(headers, data as (string | number)[][]),
+      "text/csv;charset=utf-8",
+    );
+  }
+
   function exportCrudoCSV() {
     const tidy = filtrados.flatMap(tidyRowsFor);
     const data = tidy.map(tidyRowToArray);
@@ -308,7 +352,9 @@ export default function DatosPage() {
         <p className="mt-1 text-sm text-muted">
           Tabla maestra: una fila por individuo (wide). Detalle crudo: formato tidy-long
           (<code className="rounded bg-surface-2 px-1 py-0.5 text-xs">codigo, sitio, fosa, uf, metodo, elemento, clave, valor</code>),
-          pensado para R/Python.
+          pensado para R/Python. Desglose por elemento: una columna por elemento con el número
+          entero de zonas presentes (lateralidad sumada) y una fila con los máximos —
+          <b>este último sale siempre sobre la muestra completa</b>, no sobre el filtro.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className="btn btn-ghost" onClick={exportMaestraCSV}>Maestra · CSV</button>
@@ -316,6 +362,10 @@ export default function DatosPage() {
           <span className="mx-1 hidden h-8 w-px bg-line sm:inline-block" aria-hidden />
           <button type="button" className="btn btn-ghost" onClick={exportCrudoCSV}>Detalle crudo · CSV</button>
           <button type="button" className="btn btn-ghost" onClick={exportCrudoJSON}>Detalle crudo · JSON</button>
+          <span className="mx-1 hidden h-8 w-px bg-line sm:inline-block" aria-hidden />
+          <button type="button" className="btn btn-ghost" onClick={exportDesgloseCSV} disabled={!desglose}>
+            Desglose por elemento · CSV
+          </button>
         </div>
       </section>
 

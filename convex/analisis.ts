@@ -5,12 +5,14 @@ import * as stats from "./lib/stats";
 import {
   analizarPoblacion,
   construirFila,
+  ELEMENTO_ETIQUETA,
+  ELEMENTOS_MANOS_PIES,
   contarSeriadosEat,
   UMBRAL_COMPLETITUD_EXTREMA,
   ZONAS_MANOS_PIES,
   ZONAS_NUCLEO,
 } from "./lib/poblacional";
-import { ZONATION_TOTAL_ZONES } from "./lib/metrics";
+import { ZONATION_TOTAL_ZONES, ZONATION_ELEMENT_MAX } from "./lib/metrics";
 
 /* ------------------------------------------------------------------ */
 /*  Statistics helpers                                                 */
@@ -342,6 +344,69 @@ export const poblacional = query({
         alteraciones: f.alteraciones,
         fragmentos: f.fragmentos,
       })),
+    };
+  },
+});
+
+/**
+ * Desglose de zonas presentes por elemento anatómico, para exportar.
+ *
+ * Query propia y deliberadamente chica: `poblacional` sirve para lo mismo, pero
+ * arrastra toda la estadística (incluidos cuatro bootstrap) para un export que sólo
+ * necesita conteos. Acá no se calcula ningún estadístico.
+ *
+ * Enteros de zonas con la lateralidad ya sumada, que es como los pide la Tabla 8.
+ */
+export const desglosePorElemento = query({
+  args: {},
+  handler: async (ctx) => {
+    const individuos = await ctx.db.query("individuos").collect();
+    const fichas = await ctx.db.query("fichas").collect();
+    const zonPorInd = new Map<string, (typeof fichas)[number]>();
+    for (const f of fichas) {
+      if (f.tipo === "zonacion") zonPorInd.set(f.individuoId as unknown as string, f);
+    }
+
+    const claves = Object.keys(ZONATION_ELEMENT_MAX);
+    const filas = [];
+    for (const ind of individuos) {
+      const zon = zonPorInd.get(ind._id as unknown as string);
+      const met = (zon?.metricas ?? null) as ZonacionMetrics | null;
+      if (!met || typeof met.completitudGlobal !== "number") continue;
+
+      const cpe = met.completitudPorElemento ?? {};
+      const zonas: Record<string, number> = {};
+      let total = 0;
+      let nucleo = 0;
+      for (const clave of claves) {
+        const max = ZONATION_ELEMENT_MAX[clave as keyof typeof ZONATION_ELEMENT_MAX];
+        const v = Math.round(((cpe[clave] ?? 0) * max) / 100);
+        zonas[clave] = v;
+        total += v;
+        if (!(ELEMENTOS_MANOS_PIES as readonly string[]).includes(clave)) nucleo += v;
+      }
+      filas.push({
+        codigo: ind.codigoCanonico,
+        sitio: ind.sitio,
+        zonas,
+        zonasNucleo: nucleo,
+        zonasTotales: total,
+        completitudNucleo: Math.round((nucleo / ZONAS_NUCLEO) * 10000) / 100,
+      });
+    }
+
+    filas.sort(
+      (a, b) =>
+        a.sitio.localeCompare(b.sitio, "es") ||
+        (Number.parseInt(a.codigo.split("-I").pop() ?? "0", 10) || 0) -
+          (Number.parseInt(b.codigo.split("-I").pop() ?? "0", 10) || 0),
+    );
+
+    return {
+      maximos: ZONATION_ELEMENT_MAX,
+      etiquetas: ELEMENTO_ETIQUETA,
+      denominadores: { total: ZONATION_TOTAL_ZONES, nucleo: ZONAS_NUCLEO },
+      filas,
     };
   },
 });

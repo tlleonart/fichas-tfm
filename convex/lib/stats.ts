@@ -355,6 +355,73 @@ export function ccc(x: readonly number[], y: readonly number[]): number | null {
   return den === 0 ? null : (2 * covarianceP(x, y)) / den;
 }
 
+/**
+ * Intervalo de confianza del CCC por **bootstrap percentil**.
+ *
+ * No se usa la fórmula analítica de Lin (1989) a propósito: asume normalidad
+ * bivariada, y en estos datos no se sostiene — las diferencias sobre el núcleo dan
+ * Jarque-Bera ≈ 60 con asimetría −1,7, y las marginales tienen efecto techo cerca
+ * del 100 %. El IC analítico sale sistemáticamente más estrecho, que es lo que
+ * ocurre cuando ese supuesto falla. El bootstrap no depende de él.
+ *
+ * El generador es determinista (semilla fija): el mismo conjunto de datos devuelve
+ * siempre el mismo intervalo. Un IC que cambia entre recargas no es publicable.
+ */
+export interface IntervaloCCC {
+  ccc: number;
+  inferior: number;
+  superior: number;
+  remuestreos: number;
+  nivel: number;
+}
+
+export function cccIntervalo(
+  x: readonly number[],
+  y: readonly number[],
+  opciones: { remuestreos?: number; nivel?: number; semilla?: number } = {},
+): IntervaloCCC | null {
+  const n = x.length;
+  if (n < 4 || y.length !== n) return null;
+  const punto = ccc(x, y);
+  if (punto === null) return null;
+
+  const reps = opciones.remuestreos ?? 5000;
+  const nivel = opciones.nivel ?? 0.95;
+  // LCG: reproducible y suficiente para remuestreo, sin dependencias.
+  let semilla = opciones.semilla ?? 20260908;
+  const aleatorio = () => {
+    semilla = (semilla * 1103515245 + 12345) & 0x7fffffff;
+    return semilla / 0x7fffffff;
+  };
+
+  const valores: number[] = [];
+  const xs = new Array<number>(n);
+  const ys = new Array<number>(n);
+  for (let b = 0; b < reps; b++) {
+    for (let i = 0; i < n; i++) {
+      const j = Math.floor(aleatorio() * n);
+      xs[i] = x[j];
+      ys[i] = y[j];
+    }
+    const c = ccc(xs, ys);
+    if (c !== null && Number.isFinite(c)) valores.push(c);
+  }
+  if (valores.length < 100) return null;
+
+  valores.sort((a, b) => a - b);
+  const alfa = (1 - nivel) / 2;
+  const cuantil = (pr: number) =>
+    valores[Math.min(valores.length - 1, Math.max(0, Math.round(pr * (valores.length - 1))))];
+
+  return {
+    ccc: punto,
+    inferior: cuantil(alfa),
+    superior: cuantil(1 - alfa),
+    remuestreos: valores.length,
+    nivel,
+  };
+}
+
 /* ================================================================== */
 /*  3. Regresión lineal                                                */
 /* ================================================================== */

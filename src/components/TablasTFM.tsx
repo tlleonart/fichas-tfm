@@ -77,6 +77,11 @@ const tdn = `${td} text-right tabular-nums`;
 const tdGrupo =
   "px-2 py-1.5 border-b border-line bg-surface-2 text-xs font-semibold uppercase tracking-wide text-muted";
 
+/** Se cita el método: un IC sin decir cómo se obtuvo no es reproducible. */
+const NOTA_IC =
+  "IC del CCC por bootstrap percentil (5.000 remuestreos, semilla fija). No se usa la fórmula " +
+  "analítica de Lin porque asume normalidad bivariada, que estos datos no cumplen.";
+
 /** Nombres de la Tabla 7 tal como los escribe el manuscrito. */
 const ETIQUETA_KW: Record<string, string> = {
   ich: "ICH",
@@ -121,9 +126,16 @@ export default function TablasTFM() {
     ["EAT", d.eat],
   ];
 
+  /** "[0,905 ; 0,985]" — el IC del CCC, cuando el backend lo trae. */
+  const ic = (b: typeof c.global) => {
+    const v = (b as { cccIC?: { inferior: number | null; superior: number | null } | null }).cccIC;
+    return v ? `[${n(v.inferior, 3)} ; ${n(v.superior, 3)}]` : null;
+  };
+
   const concordancia = (b: typeof c.global): [string, string][] => [
     ["r de Pearson", n(b.rPearson, 3)],
     ["CCC de Lin", n(b.cccLin, 3)],
+    ...(ic(b) ? ([["IC 95 % del CCC", ic(b) as string]] as [string, string][]) : []),
     ["Sesgo (Bland-Altman)", n(b.sesgo)],
     ["Pendiente (sesgo proporcional)", pendiente(b.pendiente, b.pendienteP)],
     ["Amplitud LoA 95 %", n(b.amplitudLoA95)],
@@ -171,6 +183,7 @@ export default function TablasTFM() {
 
       <Tabla numero={3}
         titulo={`Concordancia entre la completitud por zonación y el IPO sobre el denominador completo de ${c.global.denominador} zonas (n=${c.global.n}).`}
+        nota={ic(c.global) ? NOTA_IC : undefined}
         cabeceras={["Estadístico", "Valor"]} alineDerecha={[1]}>
         {concordancia(c.global).map(([k, v]) => (
           <tr key={k}><td className={td}>{k}</td><td className={tdn}>{v}</td></tr>
@@ -179,6 +192,7 @@ export default function TablasTFM() {
 
       <Tabla numero={4}
         titulo={`Concordancia sobre el núcleo de ${c.nucleo.denominador} zonas, excluidas manos y pies (n=${c.nucleo.n}).`}
+        nota={ic(c.nucleo) ? NOTA_IC : undefined}
         cabeceras={["Estadístico", "Valor"]} alineDerecha={[1]}>
         {concordancia(c.nucleo).map(([k, v]) => (
           <tr key={k}><td className={td}>{k}</td><td className={tdn}>{v}</td></tr>

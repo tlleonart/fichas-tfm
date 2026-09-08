@@ -265,6 +265,8 @@ export interface Concordancia {
   denominador: number;
   rPearson: number | null;
   cccLin: number | null;
+  /** IC 95 % del CCC por bootstrap percentil; null si no es computable. */
+  cccIC: { inferior: number | null; superior: number | null; remuestreos: number } | null;
   sesgo: number | null;
   deDiferencias: number | null;
   loaInferior: number | null;
@@ -324,6 +326,10 @@ function concordancia(
     denominador,
     rPearson: r(S.pearson(x, y)),
     cccLin: r(S.ccc(x, y)),
+    cccIC: (() => {
+      const ic = S.cccIntervalo(x, y);
+      return ic ? { inferior: r(ic.inferior), superior: r(ic.superior), remuestreos: ic.remuestreos } : null;
+    })(),
     sesgo: r(ba && ba.sesgo),
     deDiferencias: r(ba && ba.deDiferencias),
     loaInferior: r(ba && ba.loaInferior),

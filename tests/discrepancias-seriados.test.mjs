@@ -104,3 +104,47 @@ test("el porcentaje se calcula sobre la muestra total, no sobre los evaluables",
   assert.equal(d.evaluados, 2);
   assert.ok(Math.abs(d.pctDeLaMuestra - 33.3333) < 0.01, "1 de 3, no 1 de 2");
 });
+
+/* ─────────── IC del CCC (bootstrap) ─────────── */
+const S = await import("../convex/lib/stats.ts");
+
+test("el IC del CCC es determinista: dos llamadas dan el mismo intervalo", () => {
+  const x = Array.from({ length: 40 }, (_, i) => i + (i % 7));
+  const y = Array.from({ length: 40 }, (_, i) => i + (i % 5));
+  const a = S.cccIntervalo(x, y);
+  const b = S.cccIntervalo(x, y);
+  assert.equal(a.inferior, b.inferior);
+  assert.equal(a.superior, b.superior);
+});
+
+test("el IC contiene al CCC puntual y respeta el orden", () => {
+  const x = Array.from({ length: 50 }, (_, i) => i * 1.7 + (i % 3));
+  const y = Array.from({ length: 50 }, (_, i) => i * 1.6 + (i % 4));
+  const ic = S.cccIntervalo(x, y);
+  assert.ok(ic.inferior <= ic.ccc && ic.ccc <= ic.superior, "el punto cae dentro del intervalo");
+  assert.ok(ic.inferior < ic.superior);
+  assert.ok(ic.inferior >= -1 && ic.superior <= 1, "el CCC vive en [-1, 1]");
+});
+
+test("acuerdo perfecto da un intervalo degenerado en 1, no un error", () => {
+  const x = Array.from({ length: 30 }, (_, i) => i);
+  const ic = S.cccIntervalo(x, x);
+  assert.equal(ic.ccc, 1);
+  assert.ok(ic.inferior > 0.99);
+});
+
+test("sin datos suficientes devuelve null en vez de inventar un intervalo", () => {
+  assert.equal(S.cccIntervalo([1, 2, 3], [1, 2, 3]), null);
+  assert.equal(S.cccIntervalo([], []), null);
+});
+
+test("un intervalo más ancho corresponde a menos acuerdo", () => {
+  const n = 60;
+  const x = Array.from({ length: n }, (_, i) => i);
+  const casi = x.map((v) => v + (v % 2 ? 0.4 : -0.4));
+  const ruidoso = x.map((v) => v + ((v * 37) % 23) - 11);
+  const a = S.cccIntervalo(x, casi);
+  const b = S.cccIntervalo(x, ruidoso);
+  assert.ok(a.ccc > b.ccc);
+  assert.ok(a.superior - a.inferior < b.superior - b.inferior, "menos acuerdo, más incertidumbre");
+});

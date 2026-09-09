@@ -150,20 +150,6 @@ export function truthyKeys(o: unknown): string[] {
     .map(([k]) => k);
 }
 
-/**
- * Entradas numéricas > 0 de un sub-objeto cualquiera (fragmentos de zonación).
- *
- * ⚠️ **NO usar para mano/pie del EAT**: es genérica y emitiría también los
- * espejos legacy (`tarsianos`, `falProxMedias`), duplicando huesos. Para eso está
- * `canonicalLimbEntries`.
- */
-export function numericEntries(o: unknown): [string, number][] {
-  if (!o || typeof o !== "object") return [];
-  return Object.entries(o as Record<string, unknown>)
-    .map(([k, v]) => [k, Number(v)] as [string, number])
-    .filter(([, v]) => Number.isFinite(v) && v > 0);
-}
-
 function isObj(v: unknown): v is Record<string, unknown> {
   return Boolean(v) && typeof v === "object" && !Array.isArray(v);
 }
@@ -234,35 +220,15 @@ export function tidyRowsFor(row: DashRow): TidyRow[] {
   };
   const out: TidyRow[] = [];
 
-  /* ---- Zonación (sin cambios) ---- */
+  /* ---- Zonación ----
+   * Fragmentos, FFI y tafonomía salieron del tidy el 2026-09-09 (Martina: no
+   * se usaron). El dato sigue en Convex; simplemente ya no se exporta. */
   const zd = row.zonacion.presente ? row.zonacion.data ?? {} : null;
   if (zd) {
     for (const { key, label } of ZON_ELEMENTOS) {
       for (const k of truthyKeys(zd[key])) {
         out.push({ ...base, metodo: "zonacion", elemento: label, clave: k, valor: 1 });
       }
-    }
-    for (const [k, v] of numericEntries(zd.fragments)) {
-      out.push({ ...base, metodo: "zonacion", elemento: "Fragmentos", clave: k, valor: v });
-    }
-    for (const k of truthyKeys(zd.taphonomy)) {
-      out.push({ ...base, metodo: "zonacion", elemento: "Tafonomía", clave: k, valor: 1 });
-    }
-    if (Array.isArray(zd.ffi_rows)) {
-      (zd.ffi_rows as Record<string, unknown>[]).forEach((r, i) => {
-        for (const f of ["outline", "angle", "texture"] as const) {
-          const val = Number(r[f]);
-          if (r[f] !== "" && r[f] !== undefined && r[f] !== null && Number.isFinite(val)) {
-            out.push({
-              ...base,
-              metodo: "zonacion",
-              elemento: "FFI",
-              clave: `fila${i + 1}_${f}`,
-              valor: val,
-            });
-          }
-        }
-      });
     }
   }
 

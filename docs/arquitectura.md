@@ -125,6 +125,11 @@ Detalle completo de campos e índices en [`esquema-datos.html`](./esquema-datos.
 Funciones **puras** y única fuente de verdad del cálculo:
 - `computeEAT(data)` → `{ ipo, ich, eat, totalPresent }`.
 - `computeZonacion(data)` → `{ completitudGlobal, completitudPorElemento, elementosPresentes, ffi, alteracionesCount, fragmentosCount }`.
+  > Desde el 2026-09-09 `ffi`, `alteracionesCount` y `fragmentosCount` **se siguen
+  > calculando y guardando**, pero ya no se renderizan en ninguna pantalla ni salen en
+  > los exports: Martina no usó esos campos. El backend no se tocó a propósito, para que
+  > la limpieza sea reversible con un revert de front y no se toque la fuente de verdad
+  > del cálculo.
 - `computeMetrics(tipo, data)` → despacha según método.
 
 > Los formularios muestran un *preview* en vivo con la misma lógica; el valor **persistido**
@@ -191,21 +196,44 @@ Páginas cliente usan `useQuery` / `useMutation` de `convex/react`. Las queries 
 
 ## 6. Autenticación
 
-Gate de **contraseña única** (ver `escalado.md` para la evolución a multiusuario):
+Gate de **contraseña por rol** (ver `escalado.md` para la evolución a multiusuario):
 - `src/proxy.ts` redirige a `/login` toda request sin cookie de sesión válida.
-- `POST /api/login` compara contra `APP_PASSWORD` y setea cookie `osteo_auth` (HttpOnly,
-  SameSite=Lax) con el valor de `AUTH_TOKEN` (secreto de servidor).
+- `POST /api/login` compara primero contra `APP_PASSWORD` (rol **editor** → cookie con
+  `AUTH_TOKEN`) y después contra `VIEWER_PASSWORD` (rol **lector** → cookie con
+  `VIEWER_TOKEN`). Cookie `osteo_auth`, HttpOnly, SameSite=Lax, 30 días. La respuesta
+  es idéntica en los dos casos: no se filtra qué rol se obtuvo.
 - `POST /api/logout` limpia la cookie.
 
+### 6.1 Roles (2026-09-09)
+`src/lib/rol.ts` resuelve el rol desde la cookie y decide el acceso; `src/proxy.ts` solo
+ejecuta esa decisión. El **lector** (correctores del TFM) tiene una **allowlist
+deny-by-default**:
+
+| Rol | Puede ver |
+|-----|-----------|
+| editor | todo (comportamiento histórico) |
+| lector | `/` · `/individuos` · `/datos` · `/cobertura` · `/planilla` · `/individuos/<id>` · `/individuos/<id>/documento` |
+
+Todo lo demás (Análisis, `/docs`, `/dev/*`, `/individuos/nuevo`, editar, y los formularios
+de carga de Zonación/EAT) rebota a `/individuos`. Cualquier ruta nueva nace denegada para
+el lector hasta que se la agregue a la allowlist. La matriz está testeada en
+`tests/rol-proxy.test.mjs`.
+
+🔒 Si `VIEWER_TOKEN` está vacío o es igual a `AUTH_TOKEN`, el rol lector queda
+**deshabilitado**: una configuración a medias no puede terminar dando permisos de editor.
+
 > **Alcance:** el gate protege la UI de Next. La URL del deployment de Convex es pública;
-> la protección a nivel backend requeriría Convex Auth por usuario (ver roadmap).
+> la protección a nivel backend requeriría Convex Auth por usuario (ver roadmap). El
+> bloqueo del lector es a nivel de aplicación.
 
 ### Variables de entorno (`.env.local`)
 | Variable | Uso |
 |----------|-----|
 | `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL` | Conexión a Convex (generadas por `npx convex dev`). |
-| `APP_PASSWORD` | Contraseña de acceso a la app. |
-| `AUTH_TOKEN` | Secreto del servidor para la cookie de sesión. |
+| `APP_PASSWORD` | Contraseña de acceso a la app (rol editor). |
+| `AUTH_TOKEN` | Secreto del servidor para la cookie de sesión del editor. |
+| `VIEWER_PASSWORD` | Contraseña de solo lectura para los correctores. Sin ella, el rol lector no existe. |
+| `VIEWER_TOKEN` | Secreto del servidor para la cookie del lector. **Distinto** de `AUTH_TOKEN`. |
 
 ---
 

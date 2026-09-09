@@ -36,7 +36,8 @@ export default function LoginPage() {
         <h1 className="mt-2 font-serif text-2xl font-semibold text-ink">
           Registro Osteológico
         </h1>
-        <p className="mt-1 text-sm text-muted">Ingresá la contraseña para continuar.</p>
+        {/* Copy neutro a propósito: no se menciona que hay más de una clave. */}
+        <p className="mt-1 text-sm text-muted">Ingresá tu contraseña para continuar.</p>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <label className="flex flex-col gap-1.5">

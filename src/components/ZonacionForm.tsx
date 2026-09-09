@@ -5,6 +5,7 @@ import {
   EPIPHYSEAL_ZONES,
   buildMandibulaLateralidadObs,
 } from "@convex/lib/zonacionMigration";
+import { clavesHeredadas } from "@/lib/fichaLegacy";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -16,16 +17,6 @@ interface ZonacionFormProps {
   fechaRegistro?: string;
   saving?: boolean;
   onSave: (payload: { registrador: string; fechaRegistro: string; data: Record<string, any> }) => Promise<void>;
-}
-
-interface FFIRow {
-  id: number;
-  element: string;
-  laterality: string;
-  outline: string;
-  angle: string;
-  texture: string;
-  observation: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -52,9 +43,6 @@ const SECTION_KEYS = [
   "patella",
   "hand",
   "foot",
-  "fragments",
-  "ffi",
-  "taphonomy",
 ] as const;
 
 type SectionKey = (typeof SECTION_KEYS)[number];
@@ -79,9 +67,6 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   patella: "Rótula (L/R)",
   hand: "Mano",
   foot: "Pie",
-  fragments: "Fragmentos no identificables",
-  ffi: "Análisis de fractura (FFI)",
-  taphonomy: "Alteraciones tafonómicas",
 };
 
 /* ------------------------------------------------------------------ */
@@ -407,40 +392,6 @@ const REFERENCE_FIGURES: Partial<Record<SectionKey, SectionFigures>> = {
     ],
   },
 };
-
-const FRAGMENT_TYPES = [
-  "Axial (esponjoso)",
-  "Apendicular (cortical)",
-  "Indeterminado",
-];
-
-const FRAGMENT_SIZES = [
-  "0-20",
-  "21-30",
-  "31-40",
-  "41-50",
-  "51-60",
-  "61-70",
-  "71-80",
-  "81-90",
-  "91-100",
-  "100+",
-];
-
-const TAPHONOMY_OPTIONS = [
-  { key: "root_marks", label: "Marcas de raíces" },
-  { key: "rodent_marks", label: "Marcas de roedores" },
-  { key: "carnivore_marks", label: "Marcas de carnívoros" },
-  { key: "weathering", label: "Meteorización" },
-  { key: "manganese", label: "Tinción de manganeso" },
-  { key: "iron_oxide", label: "Óxido de hierro" },
-  { key: "cut_marks", label: "Marcas de corte" },
-  { key: "fire", label: "Exposición al fuego" },
-  { key: "abrasion", label: "Abrasión" },
-  { key: "concretions", label: "Concreciones" },
-  { key: "cortical_flaking", label: "Descamación cortical" },
-  { key: "other", label: "Otro" },
-];
 
 const HAND_CARPALS = ["TPM", "TRD", "CAP", "HAM", "SCP", "LUN", "TRI", "PIS"];
 const FOOT_TARSALS = ["CU1", "CU2", "CU3", "NAV", "CUB"];
@@ -924,28 +875,6 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     () => initialData?.foot_zones ?? {}
   );
 
-  /* ---------- fragments ---------- */
-  const [fragments, setFragments] = useState<Record<string, number>>(
-    () => initialData?.fragments ?? {}
-  );
-
-  /* ---------- FFI ---------- */
-  const [ffiRows, setFFIRows] = useState<FFIRow[]>(
-    () =>
-      initialData?.ffi_rows ?? [
-        { id: 1, element: "", laterality: "", outline: "", angle: "", texture: "", observation: "" },
-      ]
-  );
-
-  /* ---------- taphonomy ---------- */
-  const [taphonomy, setTaphonomy] = useState<Record<string, boolean>>(
-    () => initialData?.taphonomy ?? {}
-  );
-  const [weatheringDegree, setWeatheringDegree] = useState(
-    initialData?.weathering_degree ?? ""
-  );
-  const [taphonomyObs, setTaphonomyObs] = useState(initialData?.taphonomy_obs ?? "");
-
   /* ---------------------------------------------------------------- */
   /*  Completeness calculations                                       */
   /* ---------------------------------------------------------------- */
@@ -1067,7 +996,15 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
   const togglePatella = makeToggle(setPatellaZones);
   const toggleHand = makeToggle(setHandZones);
   const toggleFoot = makeToggle(setFootZones);
-  const toggleTaph = makeToggle(setTaphonomy);
+
+  /* ---------------------------------------------------------------- */
+  /*  Claves retiradas (2026-09-09)                                    */
+  /*  Fragmentos, FFI y alteraciones tafonómicas salieron de la ficha, */
+  /*  pero `fichas.actualizar` REEMPLAZA `data` entera: si el payload   */
+  /*  no las incluyera, reguardar una ficha que las tiene borraría el   */
+  /*  dato. Se arrastran tal como vinieron. Ver `@/lib/fichaLegacy`.    */
+  /* ---------------------------------------------------------------- */
+  const heredado = useMemo(() => clavesHeredadas(initialData), [initialData]);
 
   /* ---------------------------------------------------------------- */
   /*  Submit                                                           */
@@ -1088,6 +1025,8 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
       registrador,
       fechaRegistro,
       data: {
+        // Primero lo heredado: ninguna clave viva puede ser pisada.
+        ...heredado,
         unidad_rasgo: unidadRasgo,
         nivel_capa: nivelCapa,
         cranium_zones: craniumZones,
@@ -1116,11 +1055,6 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
         patella_zones: patellaZones,
         hand_zones: handZones,
         foot_zones: footZones,
-        fragments,
-        ffi_rows: ffiRows,
-        taphonomy,
-        weathering_degree: weatheringDegree,
-        taphonomy_obs: taphonomyObs,
       },
     });
   }, [
@@ -1132,7 +1066,7 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
     radiusFusion, ulnaZones, ulnaFusion, osCoxaeZones,
     femurZones, femurFusion, tibiaZones, tibiaFusion,
     fibulaZones, fibulaFusion, patellaZones, handZones, footZones,
-    fragments, ffiRows, taphonomy, weatheringDegree, taphonomyObs,
+    heredado,
   ]);
 
   /* ---------------------------------------------------------------- */
@@ -2213,263 +2147,6 @@ export default function ZonacionForm({ initialData, registrador: registradorProp
               La rótula dejó de registrarse acá: es ahora un elemento propio (sección
               “Rótula”).
             </p>
-          </div>
-        )}
-      </div>
-
-      {/* ====== 19. Unidentifiable Fragments ====== */}
-      <div>
-        <SectionHeader
-          label={SECTION_LABELS.fragments}
-          isOpen={openSections.fragments}
-          onToggle={() => toggle("fragments")}
-        />
-        {openSections.fragments && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface">
-            <div className="overflow-x-auto">
-              <table className="text-xs border-collapse w-full">
-                <thead>
-                  <tr className="bg-surface-2">
-                    <th className="border border-line-strong px-2 py-1 text-left">Tipo</th>
-                    {FRAGMENT_SIZES.map((s) => (
-                      <th key={s} className="border border-line-strong px-2 py-1 text-center">
-                        {s}mm
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {FRAGMENT_TYPES.map((ft) => (
-                    <tr key={ft} className="hover:bg-surface-2">
-                      <td className="border border-line-strong px-2 py-1 font-medium whitespace-nowrap">
-                        {ft}
-                      </td>
-                      {FRAGMENT_SIZES.map((s) => {
-                        const key = `frag_${ft}_${s}`;
-                        return (
-                          <td
-                            key={s}
-                            className="border border-line-strong px-1 py-1 text-center"
-                          >
-                            <input
-                              type="number"
-                              min={0}
-                              value={fragments[key] ?? ""}
-                              onChange={(e) =>
-                                setFragments((prev) => ({
-                                  ...prev,
-                                  [key]: e.target.value === "" ? 0 : parseInt(e.target.value, 10),
-                                }))
-                              }
-                              className="w-12 border border-line-strong rounded px-1 py-0.5 text-center text-xs"
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ====== 20. FFI ====== */}
-      <div>
-        <SectionHeader
-          label={SECTION_LABELS.ffi}
-          isOpen={openSections.ffi}
-          onToggle={() => toggle("ffi")}
-        />
-        {openSections.ffi && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-3">
-            <div className="overflow-x-auto">
-              <table className="text-xs border-collapse w-full">
-                <thead>
-                  <tr className="bg-surface-2">
-                    <th className="border border-line-strong px-2 py-1 text-left">Elemento</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">Lateralidad</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">Contorno (0-2)</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">Ángulo (0-2)</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">Textura (0-2)</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">FFI Total</th>
-                    <th className="border border-line-strong px-2 py-1 text-left">Observación</th>
-                    <th className="border border-line-strong px-2 py-1 text-center">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ffiRows.map((row, idx) => {
-                    const outline = row.outline === "" ? NaN : parseInt(row.outline, 10);
-                    const angle = row.angle === "" ? NaN : parseInt(row.angle, 10);
-                    const texture = row.texture === "" ? NaN : parseInt(row.texture, 10);
-                    const total =
-                      isNaN(outline) || isNaN(angle) || isNaN(texture)
-                        ? ""
-                        : outline + angle + texture;
-
-                    const updateRow = (field: keyof FFIRow, value: string) => {
-                      setFFIRows((prev) =>
-                        prev.map((r, i) =>
-                          i === idx ? { ...r, [field]: value } : r
-                        )
-                      );
-                    };
-
-                    return (
-                      <tr key={row.id} className="hover:bg-surface-2">
-                        <td className="border border-line-strong px-1 py-1">
-                          <input
-                            type="text"
-                            value={row.element}
-                            onChange={(e) => updateRow("element", e.target.value)}
-                            className="w-full border border-line-strong rounded px-1 py-0.5 text-xs"
-                          />
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center">
-                          <select
-                            value={row.laterality}
-                            onChange={(e) => updateRow("laterality", e.target.value)}
-                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
-                          >
-                            <option value="">--</option>
-                            <option value="L">Izq</option>
-                            <option value="R">Der</option>
-                            <option value="A">Axial</option>
-                            <option value="NA">N/A</option>
-                          </select>
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center">
-                          <select
-                            value={row.outline}
-                            onChange={(e) => updateRow("outline", e.target.value)}
-                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
-                          >
-                            <option value="">--</option>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                          </select>
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center">
-                          <select
-                            value={row.angle}
-                            onChange={(e) => updateRow("angle", e.target.value)}
-                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
-                          >
-                            <option value="">--</option>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                          </select>
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center">
-                          <select
-                            value={row.texture}
-                            onChange={(e) => updateRow("texture", e.target.value)}
-                            className="border border-line-strong rounded px-1 py-0.5 text-xs"
-                          >
-                            <option value="">--</option>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                          </select>
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center font-semibold">
-                          {total}
-                        </td>
-                        <td className="border border-line-strong px-1 py-1">
-                          <input
-                            type="text"
-                            value={row.observation}
-                            onChange={(e) => updateRow("observation", e.target.value)}
-                            className="w-full border border-line-strong rounded px-1 py-0.5 text-xs"
-                          />
-                        </td>
-                        <td className="border border-line-strong px-1 py-1 text-center">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFFIRows((prev) => prev.filter((_, i) => i !== idx))
-                            }
-                            className="text-danger hover:text-danger text-xs font-bold"
-                            title="Eliminar fila"
-                          >
-                            X
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                setFFIRows((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now(),
-                    element: "",
-                    laterality: "",
-                    outline: "",
-                    angle: "",
-                    texture: "",
-                    observation: "",
-                  },
-                ])
-              }
-              className="btn btn-primary text-xs px-3 py-1.5"
-            >
-              + Agregar fila
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ====== 21. Taphonomic Alterations ====== */}
-      <div>
-        <SectionHeader
-          label={SECTION_LABELS.taphonomy}
-          isOpen={openSections.taphonomy}
-          onToggle={() => toggle("taphonomy")}
-        />
-        {openSections.taphonomy && (
-          <div className="border border-line rounded-b-lg p-4 bg-surface space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2">
-              {TAPHONOMY_OPTIONS.map(({ key, label }) => (
-                <div key={key}>
-                  <label className="tap-label flex items-center gap-2 text-xs bg-surface-2 rounded px-2 py-1.5 hover:bg-surface-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={!!taphonomy[key]}
-                      onChange={() => toggleTaph(key)}
-                      className="tap-check"
-                    />
-                    <span>{label}</span>
-                  </label>
-                  {key === "weathering" && taphonomy[key] && (
-                    <input
-                      type="text"
-                      placeholder="Grado (0-5)"
-                      value={weatheringDegree}
-                      onChange={(e) => setWeatheringDegree(e.target.value)}
-                      className="mt-1 ml-6 border border-line-strong rounded px-2 py-1 text-xs w-24"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            <label className="block text-sm">
-              <span className="font-medium text-muted">Observaciones</span>
-              <textarea
-                value={taphonomyObs}
-                onChange={(e) => setTaphonomyObs(e.target.value)}
-                rows={3}
-                className="mt-1 block w-full border border-line-strong rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-accent"
-              />
-            </label>
           </div>
         )}
       </div>

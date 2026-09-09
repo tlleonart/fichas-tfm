@@ -10,7 +10,6 @@ import {
   TIDY_HEADERS,
   ZON_ELEMENTOS,
   canonicalLimbEntries,
-  numericEntries,
   tidyRowToArray,
   tidyRowsFor,
   truthyKeys,
@@ -41,12 +40,6 @@ const MASTER_COLS: Col[] = [
   { key: "completitudGlobal", label: "Completitud %", get: (r) => r.zonacion.metricas?.completitudGlobal ?? "" },
   { key: "zonasPresentes", label: "Zonas presentes", get: (r) => r.zonacion.metricas?.zonasPresentes ?? "" },
   { key: "elementosPresentes", label: "Elementos presentes", get: (r) => r.zonacion.metricas?.elementosPresentes ?? "" },
-  { key: "ffiN", label: "FFI n", get: (r) => r.zonacion.metricas?.ffi.n ?? "" },
-  { key: "ffiMedia", label: "FFI media", get: (r) => r.zonacion.metricas?.ffi.media ?? "" },
-  { key: "ffiFrescas", label: "FFI frescas", get: (r) => r.zonacion.metricas?.ffi.frescas ?? "" },
-  { key: "ffiSecas", label: "FFI secas", get: (r) => r.zonacion.metricas?.ffi.secas ?? "" },
-  { key: "alteraciones", label: "Alteraciones", get: (r) => r.zonacion.metricas?.alteracionesCount ?? "" },
-  { key: "fragmentos", label: "Fragmentos", get: (r) => r.zonacion.metricas?.fragmentosCount ?? "" },
   { key: "ipo", label: "IPO %", get: (r) => r.eat.metricas?.ipo ?? "" },
   { key: "ich", label: "ICH %", get: (r) => r.eat.metricas?.ich ?? "" },
   { key: "eat", label: "EAT %", get: (r) => r.eat.metricas?.eat ?? "" },
@@ -525,8 +518,6 @@ function DetalleCrudo({
         (e) => e.presentes.length > 0,
       )
     : [];
-  const fragmentos = zd ? numericEntries(zd.fragments) : [];
-  const tafonomia = zd ? truthyKeys(zd.taphonomy) : [];
 
   return (
     <div className="space-y-4">
@@ -568,30 +559,6 @@ function DetalleCrudo({
                     </div>
                   </div>
                 ))}
-                {fragmentos.length > 0 && (
-                  <div>
-                    <span className="font-medium text-ink">Fragmentos</span>
-                    <div className="mt-0.5 flex flex-wrap gap-1">
-                      {fragmentos.map(([k, v]) => (
-                        <span key={k} className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-muted">
-                          {k}: {v}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {tafonomia.length > 0 && (
-                  <div>
-                    <span className="font-medium text-ink">Tafonomía</span>
-                    <div className="mt-0.5 flex flex-wrap gap-1">
-                      {tafonomia.map((k) => (
-                        <span key={k} className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-muted">
-                          {k}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>

@@ -330,7 +330,11 @@ describe("contrato del CSV (nombres de columna estables para R/Python)", () => {
     );
   });
 
-  test("la Zonación sale intacta (el cambio es solo del EAT)", () => {
+  test("la Zonación exporta zonas; fragmentos, tafonomía y FFI ya no salen", () => {
+    // 2026-09-09: los tres campos que Martina no usó salieron de toda la UI y
+    // del tidy. El dato NO se borró de Convex — el blob `data` los sigue
+    // teniendo (acá se los pasa a propósito) y el backend los sigue
+    // calculando; lo que cambia es que el export deja de emitirlos.
     const rows = tidyRowsFor(
       fichaRow(null, {
         cranium_zones: { cr_z1: true, cr_z2: false },
@@ -341,15 +345,11 @@ describe("contrato del CSV (nombres de columna estables para R/Python)", () => {
       }),
     );
     const claves = rows.map((r) => `${r.elemento}/${r.clave}=${r.valor}`);
-    assert.deepEqual(claves, [
-      "Cráneo/cr_z1=1",
-      "Rótula/pat_L=1",
-      "Fragmentos/axial_small=3",
-      "Tafonomía/raices=1",
-      "FFI/fila1_outline=1",
-      "FFI/fila1_angle=2",
-      "FFI/fila1_texture=0",
-    ]);
+    assert.deepEqual(claves, ["Cráneo/cr_z1=1", "Rótula/pat_L=1"]);
+    assert.ok(
+      !rows.some((r) => ["Fragmentos", "Tafonomía", "FFI"].includes(r.elemento)),
+      "ningún elemento retirado puede volver al tidy",
+    );
   });
 
   test("un método ausente no emite filas de ese método", () => {

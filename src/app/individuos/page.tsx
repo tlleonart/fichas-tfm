@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { useEsEditor } from "@/components/RolProvider";
 
 function Coverage({ on, label }: { on: boolean; label: string }) {
   return (
@@ -39,6 +40,7 @@ function RevisionesBadge({ count }: { count: number }) {
 
 export default function IndividuosPage() {
   const individuos = useQuery(api.individuos.listar, {});
+  const esEditor = useEsEditor();
 
   return (
     <div className="space-y-6">
@@ -49,9 +51,11 @@ export default function IndividuosPage() {
             Cada individuo integra sus fichas de Zonación y EAT.
           </p>
         </div>
-        <Link href="/individuos/nuevo" className="btn btn-primary">
-          Nuevo individuo
-        </Link>
+        {esEditor && (
+          <Link href="/individuos/nuevo" className="btn btn-primary">
+            Nuevo individuo
+          </Link>
+        )}
       </header>
 
       {individuos === undefined ? (
@@ -59,9 +63,11 @@ export default function IndividuosPage() {
       ) : individuos.length === 0 ? (
         <div className="card p-12 text-center">
           <p className="text-muted">Todavía no hay individuos cargados.</p>
-          <Link href="/individuos/nuevo" className="btn btn-primary mt-4">
-            Crear el primero
-          </Link>
+          {esEditor && (
+            <Link href="/individuos/nuevo" className="btn btn-primary mt-4">
+              Crear el primero
+            </Link>
+          )}
         </div>
       ) : (
         <>

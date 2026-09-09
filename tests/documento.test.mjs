@@ -87,16 +87,27 @@ test("la calidad lee el objeto {value, obs} de cada grupo", () => {
   assert.equal(q.find((x) => x.grupo === "Costillas").valor, null);
 });
 
-test("el contexto descarta las filas de FFI totalmente vacías", () => {
+test("el contexto ya no expone FFI, fragmentos ni alteraciones (2026-09-09)", () => {
+  // Los tres campos salieron del documento imprimible. El blob `data` los
+  // sigue trayendo (acá se los pasa) pero el contexto no los mira: quedan
+  // `nivelCapa`, `unidadRasgo` y las dos observaciones.
   const c = contextoZonacion({
-    ffi_rows: [
-      { element: "", outline: "", angle: "", texture: "", observation: "" },
-      { element: "Fémur", outline: "V", angle: "", texture: "", observation: "" },
-    ],
+    nivel_capa: "III",
+    unidad_rasgo: "UF30",
+    cranium_obs: "obs cráneo",
+    mandibula_lateralidad_obs: "obs mandíbula",
+    ffi_rows: [{ element: "Fémur", outline: "V", angle: "", texture: "", observation: "" }],
     taphonomy: { root_marks: true, fire: false },
+    taphonomy_obs: "raíces en diáfisis",
+    weathering_degree: "3",
+    fragments: { axial_small: 3 },
   });
-  assert.equal(c.ffi.length, 1);
-  assert.deepEqual(c.alteraciones, ["Marcas de raíces"]);
+  assert.deepEqual(Object.keys(c).sort(),
+    ["craneoObs", "mandibulaObs", "nivelCapa", "unidadRasgo"]);
+  assert.equal(c.nivelCapa, "III");
+  assert.equal(c.unidadRasgo, "UF30");
+  assert.equal(c.craneoObs, "obs cráneo");
+  assert.equal(c.mandibulaObs, "obs mandíbula");
 });
 
 test("los números se escriben con coma decimal, como el manuscrito", () => {

@@ -96,7 +96,6 @@ function BloqueZonacion({ ficha, conTitulo }: { ficha: Dict; conTitulo?: boolean
   const ctx = useMemo(() => contextoZonacion(data), [data]);
   const porElemento = Object.entries((met.completitudPorElemento ?? {}) as Record<string, number>).sort();
   const mitad = Math.ceil(porElemento.length / 2);
-  const ffi = met.ffi as { media?: number | null } | undefined;
 
   return (
     <>
@@ -109,7 +108,6 @@ function BloqueZonacion({ ficha, conTitulo }: { ficha: Dict; conTitulo?: boolean
         <Metrica k="Completitud global" v={met.completitudGlobal as number} u=" %" />
         <Metrica k="Zonas presentes" v={met.zonasPresentes as number} u={` / ${TOTAL_ZONAS}`} />
         <Metrica k="Elementos presentes" v={met.elementosPresentes as number} u=" / 18" />
-        <Metrica k="FFI (media)" v={ffi?.media ?? null} />
       </div>
 
       <section>
@@ -137,63 +135,15 @@ function BloqueZonacion({ ficha, conTitulo }: { ficha: Dict; conTitulo?: boolean
       {secs.map((s, i) => <TablaSeccion key={i} s={s} />)}
 
       <section>
-        <h2>Contexto y tafonomía</h2>
+        <h2>Contexto</h2>
         <table>
           <tbody>
             <tr><th style={{ width: "26%" }}>Unidad / rasgo</th><td>{ctx.unidadRasgo || "—"}</td></tr>
             <tr><th>Nivel / capa</th><td>{ctx.nivelCapa || "—"}</td></tr>
-            <tr><th>Grado de meteorización</th><td>{ctx.weathering || "—"}</td></tr>
-            <tr>
-              <th>Alteraciones marcadas</th>
-              <td>{ctx.alteraciones.length
-                ? ctx.alteraciones.map((a) => <span key={a} className="pill">{a}</span>)
-                : <span className="vacio">ninguna registrada</span>}</td>
-            </tr>
-            {ctx.alteracionesObs ? <tr><th>Obs. de alteraciones</th><td>{ctx.alteracionesObs}</td></tr> : null}
             {ctx.craneoObs ? <tr><th>Obs. de cráneo</th><td>{ctx.craneoObs}</td></tr> : null}
             {ctx.mandibulaObs ? <tr><th>Obs. lateralidad mandíbula</th><td>{ctx.mandibulaObs}</td></tr> : null}
           </tbody>
         </table>
-      </section>
-
-      <section>
-        <h2>Índice de Fracturas Frescas (FFI)<span className="cuenta">{ctx.ffi.length} fila{ctx.ffi.length === 1 ? "" : "s"}</span></h2>
-        {ctx.ffi.length ? (
-          <table>
-            <thead>
-              <tr><th>Elemento</th><th>Lateralidad</th><th className="c">Contorno</th>
-                  <th className="c">Ángulo</th><th className="c">Textura</th><th>Observación</th></tr>
-            </thead>
-            <tbody>
-              {ctx.ffi.map((r, i) => (
-                <tr key={i}>
-                  <td>{r.element || "—"}</td><td>{r.laterality || "—"}</td>
-                  <td className="c">{r.outline || "—"}</td><td className="c">{r.angle || "—"}</td>
-                  <td className="c">{r.texture || "—"}</td><td>{r.observation || ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <p className="vacio">Sin filas de FFI registradas.</p>}
-      </section>
-
-      <section>
-        <h2>Fragmentos<span className="cuenta">{ctx.fragmentos.length}</span></h2>
-        {ctx.fragmentos.length ? (
-          <table>
-            <thead><tr><th>Tipo</th><th>Tamaño</th><th className="n">Cantidad</th><th>Observación</th></tr></thead>
-            <tbody>
-              {ctx.fragmentos.map((f, i) => (
-                <tr key={i}>
-                  <td>{String(f.type ?? f.tipo ?? "—")}</td>
-                  <td>{String(f.size ?? f.tamano ?? "—")}</td>
-                  <td className="n">{String(f.count ?? f.cantidad ?? "—")}</td>
-                  <td>{String(f.observation ?? f.obs ?? "")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <p className="vacio">Sin fragmentos registrados.</p>}
       </section>
     </>
   );

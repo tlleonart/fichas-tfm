@@ -16,7 +16,7 @@ import {
   CRANEO, MANDIBULA, VERTEBRA, VERTEBRA_COMPLETA, SACRO, ESTERNON, CLAVICULA,
   COSTILLA, ESCAPULA, HUMERO, RADIO, CUBITO, COXAL, FEMUR, TIBIA, PERONE,
   MC_MT, CALCANEO, ASTRAGALO, CARPIANOS, TARSIANOS, FALANGE_POS,
-  CARPIANOS_ORDEN, TARSIANOS_ORDEN, DEDOS, ALTERACIONES,
+  CARPIANOS_ORDEN, TARSIANOS_ORDEN, DEDOS,
   EAT_GRUPOS_CALIDAD, EAT_CRANEO, EAT_HUESOS_PLANOS, EAT_VERTEBRAS, EAT_COSTILLAS,
 } from "./anatomia";
 
@@ -183,30 +183,26 @@ function extremidad(d: Dict, cual: "mano" | "pie"): Seccion[] {
   return S;
 }
 
+/**
+ * Contexto de la ficha de zonación.
+ *
+ * El 2026-09-09 salieron de acá `ffi`, `fragmentos`, `alteraciones`,
+ * `alteracionesObs` y `weathering`: Martina no usó esos campos y dejan de
+ * mostrarse en toda la aplicación. El dato **no se borró de Convex** — el blob
+ * `data` de las fichas los sigue conteniendo y `metrics.ts` los sigue
+ * calculando; simplemente ya nadie los renderiza.
+ */
 export interface ContextoZonacion {
-  nivelCapa: string; unidadRasgo: string; weathering: string;
+  nivelCapa: string; unidadRasgo: string;
   craneoObs: string; mandibulaObs: string;
-  alteraciones: string[]; alteracionesObs: string;
-  ffi: Record<string, string>[];
-  fragmentos: Record<string, unknown>[];
 }
 
 export function contextoZonacion(data: Dict): ContextoZonacion {
-  const tap = (data.taphonomy ?? {}) as Dict;
-  const ffiRaw = (data.ffi_rows ?? []) as Record<string, string>[];
-  let frags = (data.fragments ?? []) as unknown;
-  if (frags && !Array.isArray(frags)) frags = Object.values(frags as Dict);
   return {
     nivelCapa: String(data.nivel_capa ?? ""),
     unidadRasgo: String(data.unidad_rasgo ?? ""),
-    weathering: String(data.weathering_degree ?? ""),
     craneoObs: String(data.cranium_obs ?? ""),
     mandibulaObs: String(data.mandibula_lateralidad_obs ?? ""),
-    alteraciones: Object.entries(ALTERACIONES).filter(([k]) => tap[k]).map(([, v]) => v),
-    alteracionesObs: String(data.taphonomy_obs ?? ""),
-    ffi: ffiRaw.filter((r) =>
-      ["element", "outline", "angle", "texture", "observation"].some((c) => String(r?.[c] ?? "").trim())),
-    fragmentos: (frags ?? []) as Record<string, unknown>[],
   };
 }
 

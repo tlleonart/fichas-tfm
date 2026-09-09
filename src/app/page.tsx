@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { rolDesdeToken } from "@/lib/rol";
 
-export default function Home() {
+export default async function Home() {
+  // El lector no puede crear individuos ni entrar a Análisis (denegado en
+  // `src/proxy.ts`): no le mostramos accesos que van a rebotar.
+  const esEditor =
+    rolDesdeToken((await cookies()).get("osteo_auth")?.value) === "editor";
+
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -20,12 +27,16 @@ export default function Home() {
           <Link href="/individuos" className="btn btn-primary">
             Ver individuos
           </Link>
-          <Link href="/individuos/nuevo" className="btn btn-ghost">
-            Nuevo individuo
-          </Link>
-          <Link href="/analisis" className="btn btn-ghost">
-            Análisis comparativo
-          </Link>
+          {esEditor && (
+            <>
+              <Link href="/individuos/nuevo" className="btn btn-ghost">
+                Nuevo individuo
+              </Link>
+              <Link href="/analisis" className="btn btn-ghost">
+                Análisis comparativo
+              </Link>
+            </>
+          )}
           <Link href="/cobertura" className="btn btn-ghost">
             Cobertura costillas/vértebras
           </Link>
@@ -45,8 +56,7 @@ export default function Home() {
           <p className="mt-1 text-sm text-faint">Knüsel &amp; Outram (2004)</p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             Registro de zonas anatómicas presentes por elemento óseo. Calcula
-            completitud por elemento y global, e incorpora análisis de fractura (FFI)
-            y alteraciones tafonómicas.
+            la completitud por elemento y la completitud global del individuo.
           </p>
         </article>
 

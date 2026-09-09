@@ -8,6 +8,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import RevisionesBanner, {
   type RevisionPendiente,
 } from "@/components/RevisionesBanner";
+import { useEsEditor } from "@/components/RolProvider";
 
 interface EATMetrics {
   ipo: number;
@@ -18,8 +19,6 @@ interface EATMetrics {
 interface ZonMetrics {
   completitudGlobal: number;
   elementosPresentes: number;
-  ffi: { n: number; media: number | null; frescas: number; secas: number };
-  alteracionesCount: number;
 }
 
 export default function IndividuoDetailPage() {
@@ -29,6 +28,9 @@ export default function IndividuoDetailPage() {
   const data = useQuery(api.individuos.obtener, { id });
   const eliminar = useMutation(api.individuos.eliminar);
   const marcarRevisionResuelta = useMutation(api.fichas.marcarRevisionResuelta);
+  // El lector (corrector del TFM) no llega a ninguna mutation ni a los
+  // formularios de carga; su vía es el documento imprimible.
+  const esEditor = useEsEditor();
 
   if (data === undefined)
     return <div className="card p-10 text-center text-sm text-muted">Cargando…</div>;
@@ -100,12 +102,16 @@ export default function IndividuoDetailPage() {
             <Link href={`/individuos/${id}/documento`} className="btn btn-ghost">
               Informe PDF
             </Link>
-            <Link href={`/individuos/${id}/editar`} className="btn btn-ghost">
-              Editar
-            </Link>
-            <button onClick={handleDelete} className="btn btn-ghost text-danger">
-              Eliminar
-            </button>
+            {esEditor && (
+              <>
+                <Link href={`/individuos/${id}/editar`} className="btn btn-ghost">
+                  Editar
+                </Link>
+                <button onClick={handleDelete} className="btn btn-ghost text-danger">
+                  Eliminar
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -113,8 +119,8 @@ export default function IndividuoDetailPage() {
       {/* Revisiones pendientes (corrección metodológica) */}
       <RevisionesBanner
         revisiones={zonRevisiones}
-        fichaHref={`/individuos/${id}/zonacion`}
-        onMarcarRevisada={zonFichaId ? handleMarcarRevision : undefined}
+        fichaHref={esEditor ? `/individuos/${id}/zonacion` : undefined}
+        onMarcarRevisada={esEditor && zonFichaId ? handleMarcarRevision : undefined}
       />
 
       {/* Ficha slots */}
@@ -122,15 +128,13 @@ export default function IndividuoDetailPage() {
         <FichaCard
           title="Método de Zonación"
           cite="Knüsel & Outram (2004)"
-          href={`/individuos/${id}/zonacion`}
+          href={esEditor ? `/individuos/${id}/zonacion` : undefined}
           present={!!zon}
         >
           {zm && (
             <div className="grid grid-cols-2 gap-3">
               <Stat label="Completitud global" value={`${zm.completitudGlobal}%`} />
               <Stat label="Elementos presentes" value={`${zm.elementosPresentes}/18`} />
-              <Stat label="FFI (frescas/secas)" value={`${zm.ffi.frescas}/${zm.ffi.secas}`} />
-              <Stat label="Alteraciones" value={String(zm.alteracionesCount)} />
             </div>
           )}
         </FichaCard>
@@ -138,7 +142,7 @@ export default function IndividuoDetailPage() {
         <FichaCard
           title="Estado de Afectación Tafonómica"
           cite="Serrulla & Vázquez (2019)"
-          href={`/individuos/${id}/eat`}
+          href={esEditor ? `/individuos/${id}/eat` : undefined}
           present={!!eat}
         >
           {em && (
@@ -190,10 +194,14 @@ export default function IndividuoDetailPage() {
             </table>
           </div>
           <p className="mt-3 text-xs text-faint">
-            El análisis de correlación a nivel población y total está en la sección{" "}
-            <Link href="/analisis" className="text-accent hover:underline">
-              Análisis
-            </Link>
+            La comparación a nivel población y total está en la sección{" "}
+            {esEditor ? (
+              <Link href="/analisis" className="text-accent hover:underline">
+                Análisis
+              </Link>
+            ) : (
+              "Análisis"
+            )}
             .
           </p>
         </section>
@@ -231,7 +239,8 @@ function FichaCard({
 }: {
   title: string;
   cite: string;
-  href: string;
+  /** Sin `href` (rol lector) la tarjeta no ofrece el formulario de carga. */
+  href?: string;
   present: boolean;
   children?: React.ReactNode;
 }) {
@@ -247,9 +256,11 @@ function FichaCard({
         </span>
       </div>
       <div className="mt-4 flex-1">{children}</div>
-      <Link href={href} className={`btn mt-5 ${present ? "btn-ghost" : "btn-primary"}`}>
-        {present ? "Ver / editar ficha" : "Registrar ficha"}
-      </Link>
+      {href && (
+        <Link href={href} className={`btn mt-5 ${present ? "btn-ghost" : "btn-primary"}`}>
+          {present ? "Ver / editar ficha" : "Registrar ficha"}
+        </Link>
+      )}
     </article>
   );
 }
